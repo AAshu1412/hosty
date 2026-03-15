@@ -26,7 +26,7 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+        throw new Error(`HTTPerro`);
       }
 
       const data = await response.json();

@@ -27,7 +27,8 @@ const github_callback=async (req, res) => {
     
     const tokenData = await tokenResponse.json();
     const access_token = tokenData.access_token;
-  
+    console.log("access_token: "+JSON.stringify(access_token));
+    console.log("tokenData: "+JSON.stringify(tokenData));
     if (!access_token) {
       return res.status(400).json({ error: 'Failed to get token' });
     }
@@ -42,7 +43,7 @@ const github_callback=async (req, res) => {
     
     const user = await userResponse.json();
     console.log("user: "+JSON.stringify(user));
-    console.log("tokenData: "+JSON.stringify(tokenData));
+    console.log("--------------------------------------------------------\n\n")
     res.json({ access_token, user });
   };
 
