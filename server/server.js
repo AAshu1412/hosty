@@ -3,6 +3,7 @@ const express=require("express");
 const cors=require("cors");
 const app=express();
 const githubAuthRouter=require("./router/github-auth-router");
+const jenkinsRouter=require("./router/jenkins-router");
 
 const corsOptions={
     origin:"http://localhost:5173",
@@ -13,7 +14,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use("/api/github",githubAuthRouter);
-
+app.use("/api/jenkins",jenkinsRouter);
 
 const PORT=5000;
 
