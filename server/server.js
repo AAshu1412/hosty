@@ -4,6 +4,9 @@ const cors=require("cors");
 const app=express();
 const githubAuthRouter=require("./router/github-auth-router");
 const jenkinsRouter=require("./router/jenkins-router");
+const authRouter=require("./router/auth-router");
+const connectDb = require("./utils/db");
+const errorMiddleWare = require("./middlewares/error-middleware");
 
 const corsOptions={
     origin:"http://localhost:5173",
@@ -15,9 +18,14 @@ app.use(express.json());
 
 app.use("/api/github",githubAuthRouter);
 app.use("/api/jenkins",jenkinsRouter);
+app.use("/api/auth",authRouter);
+
+app.use(errorMiddleWare);
 
 const PORT=5000;
 
-app.listen(PORT,()=>{
-    console.log(`Port is running at ${PORT}`);
-})
+connectDb().then(()=>{
+    app.listen(PORT,()=>{
+        console.log(`Port is running at ${PORT}`);
+    })
+});
