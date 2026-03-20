@@ -35,6 +35,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         require: false,
     },
+    isAdmin: {
+        type: Boolean,
+        default: false,
+        require: true,
+    },
     user: {
         username: {
             type: String,
@@ -115,7 +120,7 @@ const userSchema = new mongoose.Schema({
 userSchema.methods.generateToken = function () {
     try {
         return jwt.sign(
-            { userID: this._id.toString(), email: this.email, isAdmin: this.isAdmin },
+            { username: this.username, userID: this._id.toString(),userGithubID: this.id, email: this.email || null, isAdmin: this.isAdmin, userAccessTokens: this.access_token, userAccessTokensExpiresIn: this.access_token_expires_in},
             process.env.JWT_SECRET_KEY,
             { expiresIn: "30d" })
     } catch (error) {

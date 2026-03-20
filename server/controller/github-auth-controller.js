@@ -71,50 +71,65 @@ const github_callback = async (req, res) => {
             }
         );
 
-        const userRepoResponse = await fetch(`https://api.github.com/users/${user.login}/repos`, {
-            headers: {
-                'Authorization': `Bearer ${access_token}`,
-                'Accept': 'application/json',
-            },
-        });
-        const repo = await userRepoResponse.json();
+        // const userRepoResponse = await fetch(`https://api.github.com/users/${user.login}/repos`, {
+        //     headers: {
+        //         'Authorization': `Bearer ${access_token}`,
+        //         'Accept': 'application/json',
+        //     },
+        // });
+        // const repo = await userRepoResponse.json();
 
         console.log("user:", JSON.stringify(user, null, 2));
-        console.log("repos count:", repo.length);
 
-        // 4. UPDATE JSON FILE - OVERWRITE with NEW data
-        const jsonFilePath = path.join(__dirname, '../../ashu.json'); // Root dir
 
-        let existingData = {};
+        // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // // 4. UPDATE JSON FILE - OVERWRITE with NEW data
+        // const jsonFilePath = path.join(__dirname, '../../ashu.json'); // Root dir
 
-        try {
-            // Read existing file (if exists)
-            const fileData = await fs.readFile(jsonFilePath, 'utf8');
-            existingData = JSON.parse(fileData);
-        } catch (error) {
-            // File doesn't exist - create fresh
-            console.log("Creating new ashu.json");
-        }
+        // let existingData = {};
 
-        // 5. REPLACE old data with NEW data
-        const updatedData = {
-            access_token: access_token,
-            tokenData: tokenData,
-            user: user,
-            repo: repo  // NEW! All repos
-        };
+        // try {
+        //     // Read existing file (if exists)
+        //     const fileData = await fs.readFile(jsonFilePath, 'utf8');
+        //     existingData = JSON.parse(fileData);
+        // } catch (error) {
+        //     // File doesn't exist - create fresh
+        //     console.log("Creating new ashu.json");
+        // }
 
-        // 6. Write to file (atomic write)
-        await fs.writeFile(jsonFilePath, JSON.stringify(updatedData, null, 2));
-        console.log("✅ Saved to ashu.json | Repos:", repo.length);
-        console.log("--------------------------------------------------------\n\n")
-        res.status(200).json({ access_token, user, repo_count: repo.length });
+        // // 5. REPLACE old data with NEW data
+        // const updatedData = {
+        //     access_token: access_token,
+        //     tokenData: tokenData,
+        //     user: user,
+        //     repo: repo  // NEW! All repos
+        // };
+
+        // // 6. Write to file (atomic write)
+        // await fs.writeFile(jsonFilePath, JSON.stringify(updatedData, null, 2));
+
+        // console.log("✅ Saved to ashu.json | Repos:", repo.length);
+        // console.log("--------------------------------------------------------\n\n")
+        // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        res.status(201).json({ msg: "user created successfully", userCreated: user,token: await userCreated.generateToken()  });
 
     } catch (error) {
         console.error('❌ Error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 };
+
+
+const github_user_repos = async (req, res) => {
+    try {
+        const userData = req.user;
+        
+    } catch (error) {
+        console.error('❌ Error:', error);
+        res.status(500).json({ error: 'Server error', details: error.message });
+    }
+}
 
 const github_user_repos_content = async (req, res) => {
     try {
@@ -160,6 +175,8 @@ const github_user_repos_content = async (req, res) => {
     }
 };
 
+
+
 const github_user_repos_content_path = async (req, res) => {
     try {
         const jsonFilePath = path.join(__dirname, '../../ashu.json');
@@ -185,7 +202,7 @@ const github_user_repos_content_path = async (req, res) => {
         const repoContentPathData = await userRepoContentPath.json();
         console.log("repoContentPathData:", JSON.stringify(repoContentPathData, null, 2));
 
-      
+
         console.log("--------------------------------------------------------\n\n");
 
         res.status(200).json({
@@ -212,7 +229,7 @@ const list_users = async (req, res) => {
                 method: 'GET',
                 headers: {
                     'X-GitHub-Api-Version': '2026-03-10'
-                  }
+                }
             }
         );
         const user_list_data = await user_list.json();
@@ -223,6 +240,7 @@ const list_users = async (req, res) => {
     catch (error) {
         console.error('❌ Error:', error);
         res.status(500).json({ error: 'Server error', details: error.message });
-    }}
+    }
+}
 
 module.exports = { github_callback, github_user_repos_content, github_user_repos_content_path, list_users };
