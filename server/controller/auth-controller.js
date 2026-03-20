@@ -2,56 +2,80 @@ const User = require("../models/user-model");
 const bcrypt = require("bcryptjs");
 
 
-const register = async (req, res) => {
-    try {
-        console.log(req.body)
-        const { username, email, phone, password } = req.body;
+// const register = async (req, res) => {
+//     try {
+//         console.log(req.body)
+//         const { username, email, phone, password } = req.body;
 
 
-        const userExist = await User.findOne({ email });
-        if (userExist) {
-            return res.status(500).json({ msg: "email already exists" });
+//         const userExist = await User.findOne({ email });
+//         if (userExist) {
+//             return res.status(500).json({ msg: "email already exists" });
 
-        }
+//         }
 
-        const userCreated = await User.create({ username, email, phone, password });
+//         const userCreated = await User.create({ username, email, phone, password });
 
-        res.status(201).json({ msg: userCreated, token: await userCreated.generateToken(), userId: userCreated._id.toString() });
+//         res.status(201).json({ msg: userCreated, token: await userCreated.generateToken(), userId: userCreated._id.toString() });
+//     }
+//     catch (error) {
+
+//         res.status(500).json("register not found");
+
+
+//     }
+// }
+
+// const login = async (req, res) => {
+//     try {
+//         const { email, password } = req.body;
+
+//         const userExist = await User.findOne({ email });
+//         console.log(`This is the LOGIN in auth-controllers == ${userExist}`);
+//         if (!userExist) {
+//             return res.status(500).json({ msg: "invalid credential" });
+
+//         }
+
+//         const user = await bcrypt.compare(password, userExist.password);
+
+//         if (user) {
+//             res.status(200).json({ msg: "Login successfull", token: await userExist.generateToken(), userId: userExist._id.toString() });
+//         }
+//         else {
+//             return res.status(401).json({ msg: "invalid email or password" });
+//         }
+
+//     }
+//     catch (error) {
+//         res.status(500).send({ msg: "login error" });
+//     }
+// }
+
+const add_email = async (req, res) => {
+  try {
+    const id = req.userID;
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ msg: "Email is required" });
     }
-    catch (error) {
 
-        res.status(500).json("register not found");
-
-
-    }
-}
-
-const login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-
-        const userExist = await User.findOne({ email });
-        console.log(`This is the LOGIN in auth-controllers == ${userExist}`);
-        if (!userExist) {
-            return res.status(500).json({ msg: "invalid credential" });
-
+    const updateUserEmail = await User.updateOne(
+      { _id: id },
+      {
+        $set: { 
+          email: email,        
+          "user.email": email    
         }
+      }
+    );
 
-        const user = await bcrypt.compare(password, userExist.password);
-
-        if (user) {
-            res.status(200).json({ msg: "Login successfull", token: await userExist.generateToken(), userId: userExist._id.toString() });
-        }
-        else {
-            return res.status(401).json({ msg: "invalid email or password" });
-        }
-
-    }
-    catch (error) {
-        res.status(500).send({ msg: "login error" });
-    }
-}
-
+    res.status(200).json({ msg: "email added successfully" });
+  } catch (error) {
+    res.status(500).send({ msg: "email not added" });
+  }
+};
 
 const user = async (req, res) => {
     try {
@@ -65,4 +89,4 @@ const user = async (req, res) => {
     }
 }
 
-module.exports = { register, login, user };
+module.exports = { add_email, user };
