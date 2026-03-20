@@ -1,260 +1,270 @@
-const fs = require('fs').promises;
-const path = require('path');
+const fs = require("fs").promises;
+const path = require("path");
 const User = require("../models/user-model");
 
 const github_callback = async (req, res) => {
-    const { code } = req.body;
+  const { code } = req.body;
 
-    try {
-        // 1. Exchange code for token
-        const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                client_id: process.env.GITHUB_CLIENT_ID,
-                client_secret: process.env.GITHUB_CLIENT_SECRET,
-                code,
-            }),
-        });
+  try {
+    // 1. Exchange code for token
+    const tokenResponse = await fetch(
+      "https://github.com/login/oauth/access_token",
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          client_id: process.env.GITHUB_CLIENT_ID,
+          client_secret: process.env.GITHUB_CLIENT_SECRET,
+          code,
+        }),
+      }
+    );
 
+    const tokenData = await tokenResponse.json();
+    const access_token = tokenData.access_token;
 
-        const tokenData = await tokenResponse.json();
-        const access_token = tokenData.access_token;
-
-        if (!access_token) {
-            return res.status(400).json({ error: 'Failed to get token' });
-        }
-
-        // 2. Get user info
-        const userResponse = await fetch('https://api.github.com/user', {
-            headers: {
-                'Authorization': `Bearer ${access_token}`,
-                'Accept': 'application/json',
-            },
-        });
-        const user = await userResponse.json();
-
-        const userExist = await User.findOne({ id: user.id, username: user.login });
-        if (userExist) {
-            return res.status(500).json({ msg: "user already exists" });
-
-        }
-
-        const userCreated = await User.create(
-            {
-                access_token: tokenData.access_token,
-                access_token_expires_in: tokenData.expires_in,
-                refresh_token: tokenData.refresh_token || null,
-                refresh_token_expires_in: tokenData.refresh_token_expires_in || null,
-                token_type: tokenData.token_type,
-                username: user.login,
-                id: user.id,
-                email: user.email || null,
-                user: {
-                    username: user.login,
-                    id: user.id,
-                    node_id: user.node_id,
-                    email: user.email || null,
-                    type: user.type,
-                    name: user.name,
-                    user_view_type: user.user_view_type,
-                    bio: user.bio || null,
-                    location: user.location || null,
-                    notification_email: user.notification_email || null,
-                    avatar_url: user.avatar_url || null,
-                    html_url: user.html_url,
-                },
-                repos: [],
-            }
-        );
-
-        // const userRepoResponse = await fetch(`https://api.github.com/users/${user.login}/repos`, {
-        //     headers: {
-        //         'Authorization': `Bearer ${access_token}`,
-        //         'Accept': 'application/json',
-        //     },
-        // });
-        // const repo = await userRepoResponse.json();
-
-        console.log("user:", JSON.stringify(user, null, 2));
-
-
-        // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // // 4. UPDATE JSON FILE - OVERWRITE with NEW data
-        // const jsonFilePath = path.join(__dirname, '../../ashu.json'); // Root dir
-
-        // let existingData = {};
-
-        // try {
-        //     // Read existing file (if exists)
-        //     const fileData = await fs.readFile(jsonFilePath, 'utf8');
-        //     existingData = JSON.parse(fileData);
-        // } catch (error) {
-        //     // File doesn't exist - create fresh
-        //     console.log("Creating new ashu.json");
-        // }
-
-        // // 5. REPLACE old data with NEW data
-        // const updatedData = {
-        //     access_token: access_token,
-        //     tokenData: tokenData,
-        //     user: user,
-        //     repo: repo  // NEW! All repos
-        // };
-
-        // // 6. Write to file (atomic write)
-        // await fs.writeFile(jsonFilePath, JSON.stringify(updatedData, null, 2));
-
-        // console.log("✅ Saved to ashu.json | Repos:", repo.length);
-        // console.log("--------------------------------------------------------\n\n")
-        // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        const created_token = await userCreated.generateToken();
-
-        console.log("#######################\ncreated_token:", created_token);
-        res.status(201).json({ msg: "user created successfully", userCreated: user,token: created_token });
-
-    } catch (error) {
-        console.error('❌ Error:', error);
-        res.status(500).json({ error: 'Server error' });
+    if (!access_token) {
+      return res.status(400).json({ error: "Failed to get token" });
     }
-};
 
+    // 2. Get user info
+    const userResponse = await fetch("https://api.github.com/user", {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        Accept: "application/json",
+      },
+    });
+    const user = await userResponse.json();
+
+    const userExist = await User.findOne({ id: user.id, username: user.login });
+    if (userExist) {
+      return res.status(500).json({ msg: "user already exists" });
+    }
+
+    const userCreated = await User.create({
+      access_token: tokenData.access_token,
+      access_token_expires_in: tokenData.expires_in,
+      refresh_token: tokenData.refresh_token || null,
+      refresh_token_expires_in: tokenData.refresh_token_expires_in || null,
+      token_type: tokenData.token_type,
+      username: user.login,
+      id: user.id,
+      email: user.email || null,
+      user: {
+        username: user.login,
+        id: user.id,
+        node_id: user.node_id,
+        email: user.email || null,
+        type: user.type,
+        name: user.name,
+        user_view_type: user.user_view_type,
+        bio: user.bio || null,
+        location: user.location || null,
+        notification_email: user.notification_email || null,
+        avatar_url: user.avatar_url || null,
+        html_url: user.html_url,
+      },
+      repos: [],
+    });
+
+
+    console.log("user:", JSON.stringify(user, null, 2));
+
+    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // // 4. UPDATE JSON FILE - OVERWRITE with NEW data
+    // const jsonFilePath = path.join(__dirname, '../../ashu.json'); // Root dir
+
+    // let existingData = {};
+
+    // try {
+    //     // Read existing file (if exists)
+    //     const fileData = await fs.readFile(jsonFilePath, 'utf8');
+    //     existingData = JSON.parse(fileData);
+    // } catch (error) {
+    //     // File doesn't exist - create fresh
+    //     console.log("Creating new ashu.json");
+    // }
+
+    // // 5. REPLACE old data with NEW data
+    // const updatedData = {
+    //     access_token: access_token,
+    //     tokenData: tokenData,
+    //     user: user,
+    //     repo: repo  // NEW! All repos
+    // };
+
+    // // 6. Write to file (atomic write)
+    // await fs.writeFile(jsonFilePath, JSON.stringify(updatedData, null, 2));
+
+    // console.log("✅ Saved to ashu.json | Repos:", repo.length);
+    // console.log("--------------------------------------------------------\n\n")
+    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    const created_token = await userCreated.generateToken();
+
+    console.log("#######################\ncreated_token:", created_token);
+    res
+      .status(201)
+      .json({
+        msg: "user created successfully",
+        userCreated: user,
+        token: created_token,
+      });
+  } catch (error) {
+    console.error("❌ Error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
 
 const user_data = async (req, res) => {
-    try {
-        const userData = req.user;
-        return res.status(200).json({ msg: userData });
-    }
-    catch (error) {
-        res.status(500).send({ msg: "user error" });
-    }
-}
-
+  try {
+    const userData = req.user;
+    return res.status(200).json({ msg: userData });
+  } catch (error) {
+    res.status(500).send({ msg: "user error" });
+  }
+};
 
 const user_github_repos = async (req, res) => {
-    try {
-        const userData = req.user;
-        const access_token = req.access_token;
-         const userRepoResponse = await fetch(`https://api.github.com/users/${userData.username}/repos`, {
-            headers: {
-                'Authorization': `Bearer ${access_token}`,
-                'Accept': 'application/json',
-            },
-        });
-        const repo = await userRepoResponse.json();
-        console.log("\n\n########## *******User Github Repos******* ##############\n\n");
-        // console.log("repo:", JSON.stringify(repo, null, 2));
-        console.log("\n\n########################################################\n\n");
-        return res.status(200).json({ msg: repo });
-    }
-    catch (error) {
-        res.status(500).send({ msg: "user error" });
-    }
-}
-
+  try {
+    const userData = req.user;
+    const access_token = req.access_token;
+    const userRepoResponse = await fetch(
+      `https://api.github.com/users/${userData.username}/repos`,
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+          Accept: "application/json",
+        },
+      }
+    );
+    const repo = await userRepoResponse.json();
+    console.log(
+      "\n\n########## *******User Github Repos******* ##############\n\n"
+    );
+    // console.log("repo:", JSON.stringify(repo, null, 2));
+    console.log(
+      "\n\n########################################################\n\n"
+    );
+    return res.status(200).json({ msg: repo });
+  } catch (error) {
+    res.status(500).send({ msg: "user error" });
+  }
+};
 
 const user_github_repos_content = async (req, res) => {
-    try {
-        const userData = req.user;
-        const access_token = req.access_token;
-        const {repo_name} = req.body;
-        // 3. Fetch repo contents (repo[2] = 3rd repo)
-        const userRepoContents = await fetch(
-            `https://api.github.com/repos/${userData.username}/${repo_name}/contents`,
-            {
-                headers: {
-                    'Authorization': `Bearer ${access_token}`,  // ✅ Now defined
-                    'Accept': 'application/json',
-                },
-            }
-        );
+  try {
+    const userData = req.user;
+    const access_token = req.access_token;
+    const { repo_name } = req.body;
+    // 3. Fetch repo contents (repo[2] = 3rd repo)
+    const userRepoContents = await fetch(
+      `https://api.github.com/repos/${userData.username}/${repo_name}/contents`,
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`, // ✅ Now defined
+          Accept: "application/json",
+        },
+      }
+    );
 
-        const repoContentsData = await userRepoContents.json();
-        console.log("\n\n########## *******User Github Repos Contents******* ##############\n\n");
+    const repoContentsData = await userRepoContents.json();
+    console.log(
+      "\n\n########## *******User Github Repos Contents******* ##############\n\n"
+    );
+    console.log("repoContentsData:", JSON.stringify(repoContentsData, null, 2));
+    console.log(
+      "\n\n########################################################\n\n"
+    );
 
-        console.log("repoContentsData:", JSON.stringify(repoContentsData, null, 2));
-        console.log("\n\n########################################################\n\n");
-
-        res.status(201).json({
-            repo_content: repoContentsData,
-            repo_name: repo_name
-        });  
-
-    } catch (error) {
-        console.error('❌ Error:', error);
-        res.status(500).json({ error: 'Server error', details: error.message });
-    }
+    res.status(201).json({
+      repo_content: repoContentsData,
+      repo_name: repo_name,
+    });
+  } catch (error) {
+    console.error("❌ Error:", error);
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
 };
 
+const user_github__repos_content_path = async (req, res) => {
+  try {
+    // const jsonFilePath = path.join(__dirname, '../../ashu.json');
+    // const fileData = await fs.readFile(jsonFilePath, 'utf8');
+    // const existingData = JSON.parse(fileData);
 
+    const userData = req.user;
+    const access_token = req.access_token;
+    const { repo_name, path } = req.body;
 
-const github_user_repos_content_path = async (req, res) => {
-    try {
-        const jsonFilePath = path.join(__dirname, '../../ashu.json');
+    const userRepoContentPath = await fetch(
+      `https://api.github.com/repos/${userData.username}/${repo_name}/contents/${path}`,
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`, // ✅ Now defined
+          Accept: "application/json",
+        },
+      }
+    );
 
-        // 1. Read ashu.json
-        const fileData = await fs.readFile(jsonFilePath, 'utf8');
-        const existingData = JSON.parse(fileData);  // ✅ Fixed: 'const' declaration
+    const repoContentPathData = await userRepoContentPath.json();
+    console.log(
+      "\n\n########## *******User Github Repos Contents Path******* ##############\n\n"
+    );
+    console.log(
+      "repoContentPathData:",
+      JSON.stringify(repoContentPathData, null, 2)
+    );
+    console.log(
+      "\n\n########################################################\n\n"
+    );
 
-        // 2. Get access_token from file
-        const access_token = existingData.access_token;  // ✅ Fixed: undefined → from file
+    // const updatedData = { ...existingData, repo_content: repoContentPathData };  
+    // await fs.writeFile(jsonFilePath, JSON.stringify(updatedData, null, 2));
 
-        // 3. Fetch repo contents (repo[2] = 3rd repo)
-        const userRepoContentPath = await fetch(
-            `https://api.github.com/repos/${existingData.user.login}/${existingData.repo[2].name}/contents/${existingData.repo_content[8].path}`,
-            {
-                headers: {
-                    'Authorization': `Bearer ${access_token}`,  // ✅ Now defined
-                    'Accept': 'application/json',
-                },
-            }
-        );
-
-        const repoContentPathData = await userRepoContentPath.json();
-        console.log("repoContentPathData:", JSON.stringify(repoContentPathData, null, 2));
-
-
-        console.log("--------------------------------------------------------\n\n");
-
-        res.status(200).json({
-            repo_content: repoContentPathData,
-            repo_name: existingData.repo[2].name,
-            repo_content_path: existingData.repo_content[8].path
-        });  // ✅ Fixed: send actual data
-
-    } catch (error) {
-        console.error('❌ Error:', error);
-        res.status(500).json({ error: 'Server error', details: error.message });
-    }
+    res.status(200).json({
+      repo_content: repoContentPathData,
+      repo_name: repo_name,
+      repo_content_path: path,
+    });
+  } catch (error) {
+    console.error("❌ Error:", error);
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
 };
 
-const list_users = async (req, res) => {
-    try {
-        const jsonFilePath = path.join(__dirname, '../../ashu.json');
-        const fileData = await fs.readFile(jsonFilePath, 'utf8');
-        const existingData = JSON.parse(fileData);
+// const list_users = async (req, res) => {
+//     try {
+//         const jsonFilePath = path.join(__dirname, '../../ashu.json');
+//         const fileData = await fs.readFile(jsonFilePath, 'utf8');
+//         const existingData = JSON.parse(fileData);
 
-        const user_list = await fetch(
-            `https://api.github.com/users`,
-            {
-                method: 'GET',
-                headers: {
-                    'X-GitHub-Api-Version': '2026-03-10'
-                }
-            }
-        );
-        const user_list_data = await user_list.json();
-        console.log("user_list_data:", JSON.stringify(user_list_data, null, 2));
-        res.status(200).json({ user_list: user_list_data });
+//         const user_list = await fetch(
+//             `https://api.github.com/users`,
+//             {
+//                 method: 'GET',
+//                 headers: {
+//                     'X-GitHub-Api-Version': '2026-03-10'
+//                 }
+//             }
+//         );
+//         const user_list_data = await user_list.json();
+//         console.log("user_list_data:", JSON.stringify(user_list_data, null, 2));
+//         res.status(200).json({ user_list: user_list_data });
 
-    }
-    catch (error) {
-        console.error('❌ Error:', error);
-        res.status(500).json({ error: 'Server error', details: error.message });
-    }
-}
+//     }
+//     catch (error) {
+//         console.error('❌ Error:', error);
+//         res.status(500).json({ error: 'Server error', details: error.message });
+//     }
+// }
 
-module.exports = { github_callback,user_data,user_github_repos,user_github_repos_content};
+module.exports = {
+  github_callback,
+  user_data,
+  user_github_repos,
+  user_github_repos_content,
+  user_github__repos_content_path,
+};
