@@ -10,6 +10,7 @@ const authMiddleware = async (req, res, next) => {
 
 
     const jwtToken = token.replace("Bearer", "").trim();
+    console.log("\n\n########## *******Token form auth middleware******* ##############\n\n");
     console.log("Token form auth middleware : " + jwtToken);
 
     try {
@@ -19,20 +20,23 @@ const authMiddleware = async (req, res, next) => {
         const userData = await User.findOne({ 
             _id: isVerified.userID, 
             username: isVerified.username 
-        }).select('-access_token -access_token_expires_in -refresh_token -refresh_token_expires_in -token_type');
+        })
+        // .select('-access_token -access_token_expires_in -refresh_token -refresh_token_expires_in -token_type');
     
         if (!userData) {
             return res.status(401).json({ message: "Unauthorized: User not found." });
         }
-    
+
         console.log("Data after verifying:", userData);
     
         req.user = userData.user; 
         req.token = token;
         req.userID = userData._id;
+        req.access_token = userData.access_token;
         
         next(); 
-    
+        console.log("\n\n########################################################\n\n");
+
     } catch (error) {
         console.error("Auth Middleware Error:", error.message);
         return res.status(401).json({ message: "Unauthorized: Invalid token." });

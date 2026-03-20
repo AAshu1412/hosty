@@ -134,22 +134,36 @@ const user_data = async (req, res) => {
 }
 
 
-
-
-const user_repos_content = async (req, res) => {
+const user_github_repos = async (req, res) => {
     try {
-        const jsonFilePath = path.join(__dirname, '../../ashu.json');
+        const userData = req.user;
+        const access_token = req.access_token;
+         const userRepoResponse = await fetch(`https://api.github.com/users/${userData.username}/repos`, {
+            headers: {
+                'Authorization': `Bearer ${access_token}`,
+                'Accept': 'application/json',
+            },
+        });
+        const repo = await userRepoResponse.json();
+        console.log("\n\n########## *******User Github Repos******* ##############\n\n");
+        // console.log("repo:", JSON.stringify(repo, null, 2));
+        console.log("\n\n########################################################\n\n");
+        return res.status(200).json({ msg: repo });
+    }
+    catch (error) {
+        res.status(500).send({ msg: "user error" });
+    }
+}
 
-        // 1. Read ashu.json
-        const fileData = await fs.readFile(jsonFilePath, 'utf8');
-        const existingData = JSON.parse(fileData);  // ✅ Fixed: 'const' declaration
 
-        // 2. Get access_token from file
-        const access_token = existingData.access_token;  // ✅ Fixed: undefined → from file
-
+const user_github_repos_content = async (req, res) => {
+    try {
+        const userData = req.user;
+        const access_token = req.access_token;
+        const {repo_name} = req.body;
         // 3. Fetch repo contents (repo[2] = 3rd repo)
         const userRepoContents = await fetch(
-            `https://api.github.com/repos/${existingData.user.login}/${existingData.repo[2].name}/contents`,
+            `https://api.github.com/repos/${userData.username}/${repo_name}/contents`,
             {
                 headers: {
                     'Authorization': `Bearer ${access_token}`,  // ✅ Now defined
@@ -159,20 +173,15 @@ const user_repos_content = async (req, res) => {
         );
 
         const repoContentsData = await userRepoContents.json();
+        console.log("\n\n########## *******User Github Repos Contents******* ##############\n\n");
+
         console.log("repoContentsData:", JSON.stringify(repoContentsData, null, 2));
+        console.log("\n\n########################################################\n\n");
 
-        // 4. Update data + save
-        const updatedData = { ...existingData, repo_content: repoContentsData };  // ✅ Spread + add
-
-        await fs.writeFile(jsonFilePath, JSON.stringify(updatedData, null, 2));
-
-        console.log("✅ Added repo_content to ashu.json");
-        console.log("--------------------------------------------------------\n\n");
-
-        res.status(200).json({
+        res.status(201).json({
             repo_content: repoContentsData,
-            repo_name: existingData.repo[2].name
-        });  // ✅ Fixed: send actual data
+            repo_name: repo_name
+        });  
 
     } catch (error) {
         console.error('❌ Error:', error);
@@ -248,4 +257,4 @@ const list_users = async (req, res) => {
     }
 }
 
-module.exports = { github_callback,user_data };
+module.exports = { github_callback,user_data,user_github_repos,user_github_repos_content};
