@@ -9,4 +9,5 @@ router.route("/repoContentPath").post(authMiddleware,authcontrollers.user_github
 router.route("/user").get(authMiddleware,authcontrollers.user_data);
 router.route("/userRepos").get(authMiddleware,authcontrollers.user_github_repos);
 // router.route("/listUsers").get(authcontrollers.list_users);
+router.route("/repoBranch").post(authMiddleware,authcontrollers.user_github_repos_branch);
 module.exports=router;

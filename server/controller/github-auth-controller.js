@@ -70,7 +70,7 @@ const github_callback = async (req, res) => {
       repos: [],
     });
 
-
+    console.log("\n\n########## *******User Created******* ##############\n\n");
     console.log("user:", JSON.stringify(user, null, 2));
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -105,13 +105,15 @@ const github_callback = async (req, res) => {
     const created_token = await userCreated.generateToken();
 
     console.log("#######################\ncreated_token:", created_token);
-    res
-      .status(201)
-      .json({
-        msg: "user created successfully",
-        userCreated: user,
-        token: created_token,
-      });
+    console.log(
+      "\n\n########################################################\n\n"
+    );
+
+    res.status(201).json({
+      msg: "user created successfully",
+      userCreated: user,
+      token: created_token,
+    });
   } catch (error) {
     console.error("❌ Error:", error);
     res.status(500).json({ error: "Server error" });
@@ -221,7 +223,7 @@ const user_github__repos_content_path = async (req, res) => {
       "\n\n########################################################\n\n"
     );
 
-    // const updatedData = { ...existingData, repo_content: repoContentPathData };  
+    // const updatedData = { ...existingData, repo_content: repoContentPathData };
     // await fs.writeFile(jsonFilePath, JSON.stringify(updatedData, null, 2));
 
     res.status(200).json({
@@ -234,6 +236,36 @@ const user_github__repos_content_path = async (req, res) => {
     res.status(500).json({ error: "Server error", details: error.message });
   }
 };
+
+const user_github_repos_branch = async (req, res) => {
+  try {
+    const userData = req.user;
+    const access_token = req.access_token;
+    const { repo_name } = req.body;
+    const userRepoBranch = await fetch(
+      `https://api.github.com/repos/${userData.username}/${repo_name}/branches`,
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`, 
+          Accept: "application/json",
+        },
+      }
+    );
+    const repoBranchData = await userRepoBranch.json();
+    console.log(
+      "\n\n########## *******User Github Repos Branch******* ##############\n\n"
+    );
+    console.log("repoBranchData:", JSON.stringify(repoBranchData, null, 2));
+    console.log(
+      "\n\n########################################################\n\n"
+    );
+    res.status(200).json({ repo_branch: repoBranchData });
+  }
+  catch (error) {
+    console.error("❌ Error:", error);
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
+}
 
 // const list_users = async (req, res) => {
 //     try {
@@ -267,4 +299,5 @@ module.exports = {
   user_github_repos,
   user_github_repos_content,
   user_github__repos_content_path,
+  user_github_repos_branch
 };
