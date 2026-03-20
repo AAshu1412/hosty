@@ -111,8 +111,10 @@ const github_callback = async (req, res) => {
         // console.log("✅ Saved to ashu.json | Repos:", repo.length);
         // console.log("--------------------------------------------------------\n\n")
         // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        const created_token = await userCreated.generateToken();
 
-        res.status(201).json({ msg: "user created successfully", userCreated: user,token: await userCreated.generateToken()  });
+        console.log("#######################\ncreated_token:", created_token);
+        res.status(201).json({ msg: "user created successfully", userCreated: user,token: created_token });
 
     } catch (error) {
         console.error('❌ Error:', error);
@@ -121,17 +123,20 @@ const github_callback = async (req, res) => {
 };
 
 
-const github_user_repos = async (req, res) => {
+const user_data = async (req, res) => {
     try {
         const userData = req.user;
-        
-    } catch (error) {
-        console.error('❌ Error:', error);
-        res.status(500).json({ error: 'Server error', details: error.message });
+        return res.status(200).json({ msg: userData });
+    }
+    catch (error) {
+        res.status(500).send({ msg: "user error" });
     }
 }
 
-const github_user_repos_content = async (req, res) => {
+
+
+
+const user_repos_content = async (req, res) => {
     try {
         const jsonFilePath = path.join(__dirname, '../../ashu.json');
 
@@ -243,4 +248,4 @@ const list_users = async (req, res) => {
     }
 }
 
-module.exports = { github_callback, github_user_repos_content, github_user_repos_content_path, list_users };
+module.exports = { github_callback,user_data };

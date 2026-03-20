@@ -13,21 +13,29 @@ const authMiddleware = async (req, res, next) => {
     console.log("Token form auth middleware : " + jwtToken);
 
     try {
-
         const isVerified = jwt.verify(jwtToken, process.env.JWT_SECRET_KEY);
-        console.log("Verifying the jwtToken : " + JSON.stringify(isVerified));
-
-        const userData = await User.findOne({ email: isVerified.email }).select({ password: 0 });
-        console.log("Data after verifying (auth-middleware) : " + userData);
-
-        req.user = userData;
+        console.log("Decoded JWT Payload:", isVerified);
+    
+        const userData = await User.findOne({ 
+            _id: isVerified.userID, 
+            username: isVerified.username 
+        }).select('-access_token -access_token_expires_in -refresh_token -refresh_token_expires_in -token_type');
+    
+        if (!userData) {
+            return res.status(401).json({ message: "Unauthorized: User not found." });
+        }
+    
+        console.log("Data after verifying:", userData);
+    
+        req.user = userData.user; 
         req.token = token;
         req.userID = userData._id;
-
-        next();
+        
+        next(); 
+    
     } catch (error) {
-        return res.status(401).json({ msg: "Unauthorization Invalid Token" });
-
+        console.error("Auth Middleware Error:", error.message);
+        return res.status(401).json({ message: "Unauthorized: Invalid token." });
     }
 
 
