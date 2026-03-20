@@ -1,5 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
+const User = require("../models/user-model");
 
 const github_callback = async (req, res) => {
     const { code } = req.body;
@@ -19,6 +20,7 @@ const github_callback = async (req, res) => {
             }),
         });
 
+
         const tokenData = await tokenResponse.json();
         const access_token = tokenData.access_token;
 
@@ -35,7 +37,40 @@ const github_callback = async (req, res) => {
         });
         const user = await userResponse.json();
 
-        // 3. Get user repos
+        const userExist = await User.findOne({ id: user.id, username: user.login });
+        if (userExist) {
+            return res.status(500).json({ msg: "user already exists" });
+
+        }
+
+        const userCreated = await User.create(
+            {
+                access_token: tokenData.access_token,
+                access_token_expires_in: tokenData.expires_in,
+                refresh_token: tokenData.refresh_token || null,
+                refresh_token_expires_in: tokenData.refresh_token_expires_in || null,
+                token_type: tokenData.token_type,
+                username: user.login,
+                id: user.id,
+                email: user.email || null,
+                user: {
+                    username: user.login,
+                    id: user.id,
+                    node_id: user.node_id,
+                    email: user.email || null,
+                    type: user.type,
+                    name: user.name,
+                    user_view_type: user.user_view_type,
+                    bio: user.bio || null,
+                    location: user.location || null,
+                    notification_email: user.notification_email || null,
+                    avatar_url: user.avatar_url || null,
+                    html_url: user.html_url,
+                },
+                repos: [],
+            }
+        );
+
         const userRepoResponse = await fetch(`https://api.github.com/users/${user.login}/repos`, {
             headers: {
                 'Authorization': `Bearer ${access_token}`,
@@ -165,6 +200,29 @@ const github_user_repos_content_path = async (req, res) => {
     }
 };
 
+const list_users = async (req, res) => {
+    try {
+        const jsonFilePath = path.join(__dirname, '../../ashu.json');
+        const fileData = await fs.readFile(jsonFilePath, 'utf8');
+        const existingData = JSON.parse(fileData);
 
+        const user_list = await fetch(
+            `https://api.github.com/users`,
+            {
+                method: 'GET',
+                headers: {
+                    'X-GitHub-Api-Version': '2026-03-10'
+                  }
+            }
+        );
+        const user_list_data = await user_list.json();
+        console.log("user_list_data:", JSON.stringify(user_list_data, null, 2));
+        res.status(200).json({ user_list: user_list_data });
 
-module.exports = { github_callback, github_user_repos_content, github_user_repos_content_path };
+    }
+    catch (error) {
+        console.error('❌ Error:', error);
+        res.status(500).json({ error: 'Server error', details: error.message });
+    }}
+
+module.exports = { github_callback, github_user_repos_content, github_user_repos_content_path, list_users };
