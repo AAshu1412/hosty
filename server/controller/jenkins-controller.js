@@ -2,6 +2,7 @@ const axios = require('axios');
 
 const jenkins_get_crumb = async (req, res) => {
 
+    const { repo_url, branch } = req.body;
     try {
 
         const getCrumb = await axios.get('http://localhost:8090/crumbIssuer/api/json', {
@@ -14,7 +15,7 @@ const jenkins_get_crumb = async (req, res) => {
         console.log("Crumb: " + JSON.stringify(getCrumb.data,null,2));
 
         const buildResponse = await axios.post(`http://localhost:8090/job/Hosty/buildWithParameters?token=${process.env.JENKINS_API_TOKEN}`,
-            { name: "GOOOOGI" }, 
+            { REPO_URL: repo_url, BRANCH: branch }, 
             {
                 auth: {
                     username: process.env.JENKINS_USERNAME,
