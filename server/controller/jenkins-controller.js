@@ -6,7 +6,7 @@ const jenkins_get_crumb = async (req, res) => {
 
         const getCrumb = await axios.get('http://localhost:8090/crumbIssuer/api/json', {
             auth: {
-                username: 'ashu',
+                username: process.env.JENKINS_USERNAME,
                 password: process.env.JENKINS_API_TOKEN
             }
         });
