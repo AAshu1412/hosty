@@ -52,7 +52,7 @@ const jenkins_console_output = async (req, res) => {
     try{
         const consoleOutput = await axios.get(`http://localhost:8090/job/Hosty/lastBuild/consoleText`, {
             auth: {
-                username: 'ashu',
+                username: process.env.JENKINS_USERNAME,
                 password: process.env.JENKINS_API_TOKEN
             }
         });

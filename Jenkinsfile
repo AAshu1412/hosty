@@ -5,7 +5,7 @@ pipeline {
         stage('Clone') {
             steps {
                 script {
-                    env.FOLDER_NAME = env.REPO_URL.tokenize('/').last().minus('.git')
+                    env.FOLDER_NAME = env.REPO_URL.tokenize('/').last().minus('.git').toLowerCase()
                     
                     dir(env.FOLDER_NAME) {
                         git url: "${env.REPO_URL}", branch: "${env.BRANCH}"
@@ -31,9 +31,9 @@ pipeline {
             }
         }
 
-        stage('Apache Virtual Host Configuration') {
+      stage('Apache Virtual Host Configuration') {
             steps {
-                
+                // Look how clean this is without sudo!
                 sh '''
                     set +x 
                     
@@ -45,7 +45,7 @@ pipeline {
                 '''
             }
         }
-        stage('Configure Apache & Restart') {
+stage('Configure Apache & Restart') {
             steps {
                 sh '''
                     set +x 
@@ -70,8 +70,9 @@ pipeline {
                     fi
 
                  
-                                    # --- 2. LOCAL DNS ROUTING (/etc/hosts) ---
-
+                    
+                    
+                     # --- 2. LOCAL DNS ROUTING (/etc/hosts) ---
                     HOSTS_ENTRY="127.0.0.1   $FOLDER_NAME.hosty.com www.$FOLDER_NAME.hosty.com"
                     
                     if ! grep -q "$FOLDER_NAME.hosty.com" /etc/hosts; then
@@ -81,7 +82,7 @@ pipeline {
                         echo "DNS routing for $FOLDER_NAME already exists in /etc/hosts. Skipping."
                     fi
 
-                    # Use absolute paths here too!
+                   # Use absolute paths here too!
                     sudo /usr/bin/httpd -t
                     sudo /usr/bin/systemctl restart httpd
                 '''
