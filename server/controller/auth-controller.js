@@ -82,10 +82,10 @@ const user = async (req, res) => {
         const userData = req.user;
         console.log(userData);
 
-        return res.status(200).json({ msg: userData });
+        return res.status(200).json({status_response: 200, data: userData });
     }
     catch (error) {
-        res.status(500).send({ msg: "user error" });
+        res.status(500).send({ status_response: 500, error: error.message });
     }
 }
 

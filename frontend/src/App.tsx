@@ -30,6 +30,7 @@ function App() {
       }
 
       const data = await response.json();
+      console.log("Data received:", JSON.stringify(data, null, 2));
       const { access_token, user } = data;
       
       console.log('✅ Token:', access_token?.slice(-10));

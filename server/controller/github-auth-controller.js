@@ -111,12 +111,12 @@ const github_callback = async (req, res) => {
 
     res.status(201).json({
       msg: "user created successfully",
-      userCreated: user,
+      status_response: 201,
       token: created_token,
     });
   } catch (error) {
     console.error("❌ Error:", error);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: error.message,status_response:500 });
   }
 };
 
