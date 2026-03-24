@@ -11,7 +11,7 @@ interface JWTTokenStoreState {
 
 export const useJWTTokenStore = create<JWTTokenStoreState>()(
   devtools(
-    (set, get) => ({
+    (set) => ({
       jwtToken: localStorage.getItem(JWT_TOKEN_KEY) || null,
 
       storeTokenInLS: (token?: string) => {

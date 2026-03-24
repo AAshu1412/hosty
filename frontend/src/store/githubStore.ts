@@ -32,7 +32,7 @@ interface GithubStoreState {
 
 export const useGithubStore = create<GithubStoreState>()(
   devtools(
-    (set, get) => ({
+    () => ({
       getUserGithubRepos: async (): Promise<APIResponse<GitHubRepo[]>> => {
         try {
           const token = useJWTTokenStore.getState().jwtToken;

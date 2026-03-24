@@ -15,7 +15,7 @@ interface JenkinsStoreState {
 
 export const useJenkinsStore = create<JenkinsStoreState>()(
   devtools(
-    (set, get) => ({
+    () => ({
       jenkins_start_build: async (
         repo_url: string,
         branch: string
