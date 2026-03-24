@@ -231,9 +231,13 @@ const user_github__repos_content_path = async (req, res) => {
     // await fs.writeFile(jsonFilePath, JSON.stringify(updatedData, null, 2));
 
     res.status(200).json({
-      repo_content: repoContentPathData,
-      repo_name: repo_name,
-      repo_content_path: path,
+      msg: "Repo contents fetched successfully",
+      status_response: 200,
+      data:{
+        repo_content: repoContentPathData,
+        repo_name: repo_name,
+        repo_content_path: path
+      }
     });
   } catch (error) {
     console.error("❌ Error:", error);
@@ -263,7 +267,11 @@ const user_github_repos_branch = async (req, res) => {
     console.log(
       "\n\n########################################################\n\n"
     );
-    res.status(200).json({ repo_branch: repoBranchData });
+    res.status(200).json({
+      msg: "Repo branch fetched successfully",
+      status_response: 200,
+      data: repoBranchData
+    });
   }
   catch (error) {
     console.error("❌ Error:", error);

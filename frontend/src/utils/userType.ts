@@ -132,4 +132,13 @@ export type GitHubUser = {
     };
   }
 
+  export type GitHubRepoBranch = {
+    name: string;
+    commit: {
+      sha: string;
+      url: string;
+    };
+    protected: boolean;
+  }
+  
   
