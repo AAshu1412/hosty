@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { JWT_TOKEN_KEY } from "../lib/constants";
 // import type { User, APIResponse } from "../types/User"; // Your User type
-import type { GitHubUser, User } from "../utils/userType";
+import type { User } from "../utils/userType";
 import type { APIResponse } from "../utils/apiResponseType";
 
 interface ApiStoreState {
@@ -78,10 +78,12 @@ export const useApiStore = create<ApiStoreState>()(
         }
 
         const data = await response.json() as APIResponse;
-        if (response.ok && data.status_response === 200 && typeof data.data === GitHubUser) {
-        set({ user: data.data });
-        }
-        return data.data;
+        if (response.ok && data.status_response === 200 && data.data) {
+            set({ user: data.data });
+            return data.data;
+          }
+          
+          throw new Error("Invalid user data received");
       },
 
       // Auth check
