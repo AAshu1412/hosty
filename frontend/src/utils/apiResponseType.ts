@@ -1,9 +1,10 @@
 import type { User } from "./userType";
 
-export type APIResponse = {
+export type APIResponse<T> = {
   msg: string | null;
   status_response: number;
   token: string | null;
   error: string | null;
-  data: User | null;
+  data: T | null;
   };
+

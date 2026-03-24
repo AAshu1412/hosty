@@ -10,9 +10,7 @@ interface JWTTokenStoreState {
   storeTokenInLS: (token?: string) => void;
   isAuthenticated: () => boolean;
   clearToken: () => void;
-  githubCallback: (code: string) => Promise<APIResponse>;
-  user: User | null;
-  getUser: () => Promise<User>;
+
 }
 
 export const useJWTTokenStore = create<JWTTokenStoreState>()(

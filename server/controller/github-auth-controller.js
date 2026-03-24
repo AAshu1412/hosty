@@ -150,7 +150,7 @@ const user_github_repos = async (req, res) => {
     console.log(
       "\n\n########################################################\n\n"
     );
-    return res.status(200).json({ msg: repo });
+    return res.status(200).json({ msg: "Repo fetched successfully", status_response: 200, data: repo });
   } catch (error) {
     res.status(500).send({ msg: "user error" });
   }
@@ -182,8 +182,12 @@ const user_github_repos_content = async (req, res) => {
     );
 
     res.status(201).json({
-      repo_content: repoContentsData,
-      repo_name: repo_name,
+      msg: "Repo contents fetched successfully",
+      status_response: 200,
+      data:{
+        repo_content: repoContentsData,
+        repo_name: repo_name
+      }
     });
   } catch (error) {
     console.error("❌ Error:", error);

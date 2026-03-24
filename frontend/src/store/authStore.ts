@@ -1,22 +1,20 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { JWT_TOKEN_KEY } from "../lib/constants";
-// import type { User, APIResponse } from "../types/User"; // Your User type
-import type { User } from "../utils/userType";
+import type { User, GitHubRepo } from "../utils/userType";
 import type { APIResponse } from "../utils/apiResponseType";
 import { useJWTTokenStore } from "./jwtTokenStore";
 
 interface AuthStoreState {
-  githubCallback: (code: string) => Promise<APIResponse>;
+  githubCallback: (code: string) => Promise<APIResponse<null>>;
   user: User | null;
-  getUser: () => Promise<User>;
-  addEmail: (email: string) => Promise<APIResponse>;
+  getUser: () => Promise<APIResponse<User>>;
+  addEmail: (email: string) => Promise<APIResponse<null>>;
 }
 
 export const useAuthStore = create<AuthStoreState>()(
   devtools(
     (set, get) => ({
-      githubCallback: async (code: string): Promise<APIResponse> => {
+      githubCallback: async (code: string): Promise<APIResponse<null>> => {
         try {
           const response = await fetch(
             "http://localhost:5000/api/github/callback",
@@ -27,7 +25,7 @@ export const useAuthStore = create<AuthStoreState>()(
             }
           );
 
-          const data = (await response.json()) as APIResponse;
+          const data = (await response.json()) as APIResponse<null>;
 
           if (response.ok && data.status_response === 201 && data.token) {
             useJWTTokenStore.getState().storeTokenInLS(data.token);
@@ -39,11 +37,11 @@ export const useAuthStore = create<AuthStoreState>()(
           throw error;
         }
       },
-      
+
       user: null,
 
       // Get current user
-      getUser: async (): Promise<User> => {
+      getUser: async (): Promise<APIResponse<User>> => {
         const token = useJWTTokenStore.getState().jwtToken;
         if (!token) throw new Error("No token found");
 
@@ -58,16 +56,16 @@ export const useAuthStore = create<AuthStoreState>()(
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const data = (await response.json()) as APIResponse;
+        const data = (await response.json()) as APIResponse<User>;
         if (response.ok && data.status_response === 200 && data.data) {
           set({ user: data.data });
-          return data.data;
+          return data;
         }
 
         throw new Error("Invalid user data received");
       },
 
-      addEmail: async (email: string): Promise<APIResponse> => {
+      addEmail: async (email: string): Promise<APIResponse<null>> => {
         const token = useJWTTokenStore.getState().jwtToken;
         if (!token) throw new Error("No token found");
         if (!email) throw new Error("Email is required");
@@ -83,9 +81,10 @@ export const useAuthStore = create<AuthStoreState>()(
           }
         );
 
-        const data = (await response.json()) as APIResponse;
+        const data = (await response.json()) as APIResponse<null>;
 
         if (response.ok && data.status_response === 200) {
+            await get().getUser();
           return data;
         }
 
