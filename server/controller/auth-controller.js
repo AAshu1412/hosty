@@ -71,9 +71,9 @@ const add_email = async (req, res) => {
       }
     );
 
-    res.status(200).json({ msg: "email added successfully" });
+    res.status(200).json({ msg: "email added successfully", status_response: 200 });
   } catch (error) {
-    res.status(500).send({ msg: "email not added" });
+    res.status(500).send({ error: error.message, status_response: 500 });
   }
 };
 
