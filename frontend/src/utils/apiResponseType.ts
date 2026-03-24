@@ -1,4 +1,3 @@
-import type { User } from "./userType";
 
 export type APIResponse<T> = {
   msg: string | null;

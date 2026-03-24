@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const jenkins_get_crumb = async (req, res) => {
+const jenkins_start_build = async (req, res) => {
 
     const { repo_url, branch } = req.body;
     try {
@@ -34,16 +34,15 @@ const jenkins_get_crumb = async (req, res) => {
       
         res.status(200).json({ 
             message: 'Build started successfully', 
-            buildStatus: buildResponse.status, 
-            buildResponseData: buildResponse.data, 
-            // crumb: getCrumb.data 
+            status_response: buildResponse.status, 
+            // data: buildResponse.data, 
         });
 
     } catch (error) {
         console.error('❌ Error:', error.message);
         res.status(500).json({ 
-            error: "Failed to trigger Jenkins build",
-            details: error.response ? error.response.data : error.message 
+            status_response: 500,
+            error: error.response ? error.response.data : error.message 
         });
     }
 }
@@ -57,12 +56,29 @@ const jenkins_console_output = async (req, res) => {
             }
         });
         console.log("Console Output: "+consoleOutput.data);
-        res.status(200).json({ message: 'Console output fetched', consoleOutput: consoleOutput.data });
+        res.status(200).json({ msg: 'Console output fetched', status_response: 200, data: consoleOutput.data });
     }
     catch(error){
         console.error('❌ Error:', error);
-        res.status(500).json({ error });
+        res.status(500).json({ status_response: 500, error: error.response ? error.response.data : error.message });
     }
 }
 
-module.exports = { jenkins_get_crumb,jenkins_console_output };
+const jenkins_job_status = async (req, res) => {
+    try{
+        const jobStatus = await axios.get(`http://localhost:8090/job/Hosty/api/json`, {
+            auth: {
+                username: process.env.JENKINS_USERNAME,
+                password: process.env.JENKINS_API_TOKEN
+            }
+        });
+        console.log("Job Status: "+JSON.stringify(jobStatus.data,null,2));
+        res.status(200).json({ msg: 'Job status fetched', status_response: 200, data: jobStatus.data });
+    }
+    catch(error){
+        console.error('❌ Error:', error);
+        res.status(500).json({ status_response: 500, error: error.response ? error.response.data : error.message });
+    }
+}
+
+module.exports = { jenkins_start_build,jenkins_console_output,jenkins_job_status };
