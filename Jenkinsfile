@@ -7,17 +7,13 @@ pipeline {
                 script {
                     env.FOLDER_NAME = env.REPO_URL.tokenize('/').last().minus('.git').toLowerCase()
                     
-                    // 1. SAFE SUB-DIRECTORY LOGIC
-                    // We check if a variable named 'SUB_DIR' was provided and isn't empty.
+                   
                     if (env.SUB_DIR?.trim()) {
-                        // If yes, build path is: folder/subdirectory
                         env.BUILD_DIR = "${env.FOLDER_NAME}/${env.SUB_DIR}"
                     } else {
-                        // If no, build path is just the base folder
                         env.BUILD_DIR = env.FOLDER_NAME
                     }
                     
-                    // Always clone into the base folder
                     dir(env.FOLDER_NAME) {
                         git url: "${env.REPO_URL}", branch: "${env.BRANCH}"
                     }
@@ -27,8 +23,7 @@ pipeline {
         
         stage('Install Modules & Build') {
             steps {
-                // 2. USE THE CALCULATED DIRECTORY
-                // This cleanly handles both scenarios without syntax errors
+            
                 dir(env.BUILD_DIR) {
                     
                     nodejs(nodeJSInstallationName: '24.9.0') {
@@ -47,11 +42,8 @@ pipeline {
                 sh '''
                     set +x 
                     
-                    # Create the web directory safely (always uses the base repo name)
                     mkdir -p /srv/http/$FOLDER_NAME
                     
-                    # 3. USE BUILD_DIR FOR THE COPY COMMAND
-                    # Because we calculated BUILD_DIR earlier, this line always works perfectly!
                     cp -r /var/lib/jenkins/workspace/Hosty/$BUILD_DIR/dist/* /srv/http/$FOLDER_NAME/
                 '''
             }

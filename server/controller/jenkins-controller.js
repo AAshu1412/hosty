@@ -1,8 +1,9 @@
 const axios = require('axios');
+const User = require("../models/user-model");
 
 const jenkins_start_build = async (req, res) => {
 
-    const { repo_url, branch } = req.body;
+    const { repo_url, branch, to, username, user_id } = req.body;
     try {
 
         // const getCrumb = await axios.get('http://localhost:8090/crumbIssuer/api/json', {
@@ -15,7 +16,7 @@ const jenkins_start_build = async (req, res) => {
         // console.log("Crumb: " + JSON.stringify(getCrumb.data,null,2));
 
         const buildResponse = await axios.post(`http://localhost:8090/job/Hosty/buildWithParameters?token=${process.env.JENKINS_API_TOKEN}`,
-            { REPO_URL: repo_url, BRANCH: branch }, 
+            { REPO_URL: repo_url, BRANCH: branch, TO: to, USERNAME: username, USER_ID: user_id }, 
             {
                 auth: {
                     username: process.env.JENKINS_USERNAME,
@@ -49,7 +50,8 @@ const jenkins_start_build = async (req, res) => {
 
 const jenkins_console_output = async (req, res) => {
     try{
-        const consoleOutput = await axios.get(`http://localhost:8090/job/Hosty/lastBuild/consoleText`, {
+        const { build_number } = req.body;
+        const consoleOutput = await axios.get(`http://localhost:8090/job/Hosty/${build_number}/consoleText`, {
             auth: {
                 username: process.env.JENKINS_USERNAME,
                 password: process.env.JENKINS_API_TOKEN
@@ -81,4 +83,22 @@ const jenkins_job_status = async (req, res) => {
     }
 }
 
-module.exports = { jenkins_start_build,jenkins_console_output,jenkins_job_status };
+const jenkins_per_build_status = async (req, res) => {
+    try{
+        const { build_number } = req.body;
+        const buildStatus = await axios.get(`http://localhost:8090/job/Hosty/${build_number}/api/json`, {
+            auth: {
+                username: process.env.JENKINS_USERNAME,
+                password: process.env.JENKINS_API_TOKEN
+            }
+        });
+        console.log("Build Status: "+JSON.stringify(buildStatus.data,null,2));
+        res.status(200).json({ msg: 'Build status fetched', status_response: 200, data: buildStatus.data });
+    }
+    catch(error){
+        console.error('❌ Error:', error);
+        res.status(500).json({ status_response: 500, error: error.response ? error.response.data : error.message });
+    }
+}
+
+module.exports = { jenkins_start_build,jenkins_console_output,jenkins_job_status,jenkins_per_build_status };
