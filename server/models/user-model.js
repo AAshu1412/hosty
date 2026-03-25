@@ -2,6 +2,61 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+const DeployedRepoSchema = new mongoose.Schema({
+    repo_url: {
+      type: String,
+      required: true
+    },
+    subDirectory: {
+      type: String,
+      required: false,
+      default: null
+    },
+    branch: {
+      type: String,
+      required: true
+    },
+    email: {
+      type: String,
+      required: false,
+      default: null
+    },
+    username: {
+      type: String,
+      required: true
+    },
+    id: {
+      type: Number,
+      required: true
+    },
+    hosted_site_url: {
+      type: String,
+      required: true
+    },
+    status: {
+      type: String,
+      required: true,
+      enum: ['pending', 'building', 'success', 'failed'] // Optional validation
+    },
+    build_number: {
+      type: Number,
+      required: true
+    },
+    created_at: {
+      type: Number,
+      required: true // Unix timestamp
+    },
+    updated_at: {
+      type: Number,
+      required: true // Unix timestamp
+    }
+  }
+//   , {
+//  //   timestamps: true // Optional: createdAt, updatedAt
+//   }
+);
+  
+
 const userSchema = new mongoose.Schema({
     access_token: {
         type: String,
@@ -92,22 +147,47 @@ const userSchema = new mongoose.Schema({
         },
     },
     repos:{
-        type: Array,
+        type: [DeployedRepoSchema],
         require: false,
     }
 });
 
-repo_url: string,
-subDirectory: string | null,
-branch: string,
-to: string | null,
-username: string,
-id: number,
-hosted_site_url: string,
-status: string
-build_number: number,
-timestamp: number
-
+const userBuildsSchema = new mongoose.Schema({
+    username: {
+        type: String,
+        require: true,
+    },
+    id: {
+        type: Number,
+        require: true,
+    },
+    repo_url: {
+        type: String,
+        required: true
+      },
+      hosted_site_url: {
+        type: String,
+        required: false,
+        default: null
+      },
+      builds: [{
+        type: DeployedRepoSchema,
+        discriminatorKey: 'kind', // ✅ Separate collections
+        collection: 'userBuilds_builds' // ✅ Separate table
+      }]
+    });
+    
+    const UserBuildRepo = userBuildsSchema.discriminator(
+      'UserBuildRepo',
+      new mongoose.Schema({
+        build_logs: {
+          type: String,
+          required: false,
+          default: null
+        },
+      })
+    );
+    
 
 // userSchema.pre("save", async function (next) {
 //     console.log(this);
@@ -143,6 +223,7 @@ userSchema.methods.generateToken = function () {
 
 
 const User = new mongoose.model("User", userSchema);
+const UserBuilds = mongoose.model('UserBuilds', userBuildsSchema);
 
 
 module.exports = User;

@@ -3,7 +3,7 @@ const User = require("../models/user-model");
 
 const jenkins_start_build = async (req, res) => {
 
-    const { repo_url, branch, to, username, user_id } = req.body;
+    const { repo_url, branch, subDirectory } = req.body;
     try {
 
         // const getCrumb = await axios.get('http://localhost:8090/crumbIssuer/api/json', {
@@ -16,6 +16,9 @@ const jenkins_start_build = async (req, res) => {
         // console.log("Crumb: " + JSON.stringify(getCrumb.data,null,2));
 
         const userData = req.user;
+        const username = userData.username;
+        const user_id = userData.id;
+        const to = userData.email || null;
         
         const lastBuildDetail = await axios.get(`http://localhost:8090/job/Hosty/lastBuild/api/json`, {
             auth: {
@@ -24,14 +27,33 @@ const jenkins_start_build = async (req, res) => {
             }
         });
 
-        const updateUserRepos = await User.updateOne({_id: userData._id, id: userData.id, username: userData.username }, { $set: { "repos.lastBuildDetail": lastBuildDetail.data } });
+        const nextBuildNumber = parseInt(lastBuildDetail.data.number) + 1 || 1; // ✅ Fixed tonumber → parseInt
+        const now = Date.now();
 
-
-
+        const updateUserRepos = await User.updateOne(
+            { _id: userData._id },
+            {
+              $push: {
+                repos: {
+                  repo_url,
+                  subDirectory: subDirectory || null,
+                  branch,
+                  email: to,
+                  username,
+                  id: user_id,
+                  hosted_site_url: null, // Will be updated after build
+                  status: 'pending',
+                  build_number: nextBuildNumber,
+                  created_at: now,
+                  updated_at: now
+                }
+              }
+            }
+          );
 
 
         const buildResponse = await axios.post(`http://localhost:8090/job/Hosty/buildWithParameters?token=${process.env.JENKINS_API_TOKEN}`,
-            { REPO_URL: repo_url, BRANCH: branch, TO: to, USERNAME: username, USER_ID: user_id }, 
+            { REPO_URL: repo_url, BRANCH: branch, SUB_DIR: subDirectory || null, EMAIL: to || null, USERNAME: username, USER_ID: user_id }, 
             {
                 auth: {
                     username: process.env.JENKINS_USERNAME,
@@ -51,7 +73,10 @@ const jenkins_start_build = async (req, res) => {
         res.status(200).json({ 
             message: 'Build started successfully', 
             status_response: buildResponse.status, 
-            // data: buildResponse.data, 
+            data: {
+                build_number: nextBuildNumber,
+                repo_url
+              }
         });
 
     } catch (error) {
