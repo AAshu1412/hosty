@@ -49,6 +49,11 @@ const DeployedRepoSchema = new mongoose.Schema({
     updated_at: {
       type: Number,
       required: true // Unix timestamp
+    },
+    number_of_builds: {
+      type: [Number],
+      required: true,
+      default: []
     }
   }
 //   , {

@@ -30,27 +30,49 @@ const jenkins_start_build = async (req, res) => {
         const nextBuildNumber = parseInt(lastBuildDetail.data.number) + 1 || 1; // ✅ Fixed tonumber → parseInt
         const now = Date.now();
 
-        const updateUserRepos = await User.updateOne(
-            { _id: userData._id },
+         const updateResult = await User.updateOne(
             {
-              $push: {
-                repos: {
-                  repo_url,
-                  subDirectory: subDirectory || null,
-                  branch,
-                  email: to,
-                  username,
-                  id: user_id,
-                  hosted_site_url: null, // Will be updated after build
-                  status: 'pending',
-                  build_number: nextBuildNumber,
-                  created_at: now,
-                  updated_at: now
-                }
+              _id: userData._id,
+              "repos.repo_url": repo_url,
+              "repos.branch": branch
+            },
+            {
+              $set: {
+                "repos.$.status": "pending",
+                "repos.$.updated_at": now,
+                "repos.$.build_number": nextBuildNumber
+              },
+              $addToSet: {  
+                "repos.$.number_of_builds": nextBuildNumber
               }
             }
           );
+  
+      if (updateResult.matchedCount === 0) {
+        await User.updateOne(
+          { _id: userData._id },
+          {
+            $push: {
+              repos: {
+                repo_url,
+                subDirectory: subDirectory || null,
+                branch,
+                email: to,
+                username,
+                id: user_id,
+                hosted_site_url: null,
+                status: 'pending',
+                build_number: nextBuildNumber,
+                created_at: now,
+                updated_at: now,
+                number_of_builds: [nextBuildNumber]
+              }
+            }
+          }
+        );
+      }
 
+      
 
         const buildResponse = await axios.post(`http://localhost:8090/job/Hosty/buildWithParameters?token=${process.env.JENKINS_API_TOKEN}`,
             { REPO_URL: repo_url, BRANCH: branch, SUB_DIR: subDirectory || null, EMAIL: to || null, USERNAME: username, USER_ID: user_id }, 
