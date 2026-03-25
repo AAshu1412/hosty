@@ -8,9 +8,10 @@ interface JenkinsStoreState {
   jenkins_start_build: (
     repo_url: string,
     branch: string
-  ) => Promise<APIResponse<null>>;
-  jenkins_console_output: () => Promise<APIResponse<string>>;
+  ) => Promise<APIResponse<{build_number: number}>>;
+  jenkins_console_output: (build_number: number) => Promise<APIResponse<string>>;
   jenkins_job_status: () => Promise<APIResponse<any>>;
+  jenkins_per_build_status: (build_number: number) => Promise<APIResponse<any>>;
 }
 
 export const useJenkinsStore = create<JenkinsStoreState>()(
@@ -19,7 +20,7 @@ export const useJenkinsStore = create<JenkinsStoreState>()(
       jenkins_start_build: async (
         repo_url: string,
         branch: string
-      ): Promise<APIResponse<null>> => {
+      ): Promise<APIResponse<{build_number: number}>> => {
         try {
           const token = useJWTTokenStore.getState().jwtToken;
           if (!token) throw new Error("No token found");
@@ -35,7 +36,7 @@ export const useJenkinsStore = create<JenkinsStoreState>()(
             }
           );
 
-          const data = (await response.json()) as APIResponse<null>;
+          const data = (await response.json()) as APIResponse<{build_number: number}>;
 
           if (response.ok && data.status_response === 201) {
             return data;
@@ -47,17 +48,19 @@ export const useJenkinsStore = create<JenkinsStoreState>()(
           throw error;
         }
       },
-      jenkins_console_output: async (): Promise<APIResponse<string>> => {
+      jenkins_console_output: async (build_number: number): Promise<APIResponse<string>> => {
         try {
           const token = useJWTTokenStore.getState().jwtToken;
           if (!token) throw new Error("No token found");
           const response = await fetch(
             `http://localhost:5000/api/jenkins/consoleOutput`,
             {
-              method: "GET",
+              method: "POST",
               headers: {
                 Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
               },
+              body: JSON.stringify({ build_number: build_number }),
             }
           );
           const data = (await response.json()) as APIResponse<string>;
@@ -91,6 +94,32 @@ export const useJenkinsStore = create<JenkinsStoreState>()(
           throw new Error("Invalid job status received: " + data.error);
         } catch (error) {
           console.error("Error getting job status:", error);
+          throw error;
+        }
+      },
+
+      jenkins_per_build_status: async (build_number: number): Promise<APIResponse<any>> => {
+        try {
+          const token = useJWTTokenStore.getState().jwtToken;
+          if (!token) throw new Error("No token found");
+          const response = await fetch(
+            `http://localhost:5000/api/jenkins/perBuildStatus`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ build_number: build_number }),
+            }
+          );
+          const data = (await response.json()) as APIResponse<any>;
+          if (response.ok && data.status_response === 200 && data.data) {
+            return data;
+          }
+          throw new Error("Invalid per build status received: " + data.error);
+        } catch (error) {
+          console.error("Error getting per build status:", error);
           throw error;
         }
       },

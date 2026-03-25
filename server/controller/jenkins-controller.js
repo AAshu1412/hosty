@@ -97,7 +97,6 @@ const jenkins_start_build = async (req, res) => {
             status_response: buildResponse.status, 
             data: {
                 build_number: nextBuildNumber,
-                repo_url
               }
         });
 
