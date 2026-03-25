@@ -1,6 +1,6 @@
 const fs = require("fs").promises;
 const path = require("path");
-const User = require("../models/user-model");
+const {User} = require("../models/user-model");
 
 const github_callback = async (req, res) => {
   const { code } = req.body;

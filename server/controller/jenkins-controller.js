@@ -1,5 +1,5 @@
 const axios = require('axios');
-const User = require("../models/user-model");
+const {User} = require("../models/user-model");
 
 const jenkins_start_build = async (req, res) => {
 
@@ -43,7 +43,7 @@ const jenkins_start_build = async (req, res) => {
                 "repos.$.build_number": nextBuildNumber
               },
               $addToSet: {  
-                "repos.$.number_of_builds": nextBuildNumber
+                "repos.$.number_of_builds": {build: nextBuildNumber, created_at: now}
               }
             }
           );

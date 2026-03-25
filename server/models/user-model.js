@@ -51,7 +51,7 @@ const DeployedRepoSchema = new mongoose.Schema({
       required: true // Unix timestamp
     },
     number_of_builds: {
-      type: [Number],
+      type: [{build: Number, created_at: Number}],
       required: true,
       default: []
     }
@@ -157,41 +157,41 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-const userBuildsSchema = new mongoose.Schema({
-    username: {
-        type: String,
-        require: true,
-    },
-    id: {
-        type: Number,
-        require: true,
-    },
-    repo_url: {
-        type: String,
-        required: true
-      },
-      hosted_site_url: {
-        type: String,
-        required: false,
-        default: null
-      },
-      builds: [{
-        type: DeployedRepoSchema,
-        discriminatorKey: 'kind', // ✅ Separate collections
-        collection: 'userBuilds_builds' // ✅ Separate table
-      }]
-    });
+// const userBuildsSchema = new mongoose.Schema({
+//     username: {
+//         type: String,
+//         require: true,
+//     },
+//     id: {
+//         type: Number,
+//         require: true,
+//     },
+//     repo_url: {
+//         type: String,
+//         required: true
+//       },
+//       hosted_site_url: {
+//         type: String,
+//         required: false,
+//         default: null
+//       },
+//       builds: [{
+//         type: DeployedRepoSchema,
+//         discriminatorKey: 'kind', // ✅ Separate collections
+//         collection: 'userBuilds_builds' // ✅ Separate table
+//       }]
+//     });
     
-    const UserBuildRepo = userBuildsSchema.discriminator(
-      'UserBuildRepo',
-      new mongoose.Schema({
-        build_logs: {
-          type: String,
-          required: false,
-          default: null
-        },
-      })
-    );
+//     const UserBuildRepo = userBuildsSchema.discriminator(
+//       'UserBuildRepo',
+//       new mongoose.Schema({
+//         build_logs: {
+//           type: String,
+//           required: false,
+//           default: null
+//         },
+//       })
+//     );
     
 
 // userSchema.pre("save", async function (next) {
@@ -228,7 +228,7 @@ userSchema.methods.generateToken = function () {
 
 
 const User = new mongoose.model("User", userSchema);
-const UserBuilds = mongoose.model('UserBuilds', userBuildsSchema);
+// const UserBuilds = mongoose.model('UserBuilds', userBuildsSchema);
 
 
-module.exports = User;
+module.exports = { User };
