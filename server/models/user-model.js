@@ -97,6 +97,18 @@ const userSchema = new mongoose.Schema({
     }
 });
 
+repo_url: string,
+subDirectory: string | null,
+branch: string,
+to: string | null,
+username: string,
+id: number,
+hosted_site_url: string,
+status: string
+build_number: number,
+timestamp: number
+
+
 // userSchema.pre("save", async function (next) {
 //     console.log(this);
 //     const user = this;

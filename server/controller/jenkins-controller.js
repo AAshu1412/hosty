@@ -15,6 +15,21 @@ const jenkins_start_build = async (req, res) => {
 
         // console.log("Crumb: " + JSON.stringify(getCrumb.data,null,2));
 
+        const userData = req.user;
+        
+        const lastBuildDetail = await axios.get(`http://localhost:8090/job/Hosty/lastBuild/api/json`, {
+            auth: {
+                username: process.env.JENKINS_USERNAME,
+                password: process.env.JENKINS_API_TOKEN
+            }
+        });
+
+        const updateUserRepos = await User.updateOne({_id: userData._id, id: userData.id, username: userData.username }, { $set: { "repos.lastBuildDetail": lastBuildDetail.data } });
+
+
+
+
+
         const buildResponse = await axios.post(`http://localhost:8090/job/Hosty/buildWithParameters?token=${process.env.JENKINS_API_TOKEN}`,
             { REPO_URL: repo_url, BRANCH: branch, TO: to, USERNAME: username, USER_ID: user_id }, 
             {
