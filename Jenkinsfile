@@ -89,4 +89,41 @@ pipeline {
             }
         }
     }
+    post {
+        success {
+            // 1. Triple double-quotes allow Groovy variable injection (${env...})
+            // 2. We use single quotes around the JSON payload for the bash curl command
+            sh """
+                curl -X POST -H "Content-Type: application/json" \
+                -d '{"build": "${env.BUILD_NUMBER}", "status": "success", "user": "${env.USERNAME}", "user_id": "${env.USER_ID}", "email": "${env.EMAIL}", "hosted_site_url": "http://${env.FOLDER_NAME}.hosty.com", "repo_url":"${env.REPO_URL}", "branch": "${env.BRANCH}", "subDirectory":"${env.SUB_DIR}"}' \
+                http://localhost:5000/api/webhook/jenkinsWebhook/
+            """
+            
+            // 3. MUST wrap 'if' statements in a script block!
+            script {
+                if (env.EMAIL?.trim()) {
+                    emailext subject: "Build Successful: ${env.JOB_NAME}",
+                             body: "Good News! The build was successful.",
+                             to: "${env.EMAIL}" // Actually uses the variable now!
+                }
+            }
+        }
+        
+        failure {
+            // Added the failure webhook so your Express server knows it failed!
+            sh """
+                curl -X POST -H "Content-Type: application/json" \
+                -d '{"build": "${env.BUILD_NUMBER}", "status": "failed", "user": "${env.USERNAME}", "user_id": "${env.USER_ID}", "email": "${env.EMAIL}", "hosted_site_url": "http://${env.FOLDER_NAME}.hosty.com", "repo_url":"${env.REPO_URL}", "branch": "${env.BRANCH}", "subDirectory":"${env.SUB_DIR}"}' \
+                http://localhost:5000/api/webhook/jenkinsWebhook/
+            """
+
+            script {
+                if (env.EMAIL?.trim()) {
+                    emailext subject: "Build FAILED: ${env.JOB_NAME}",
+                             body: "Bad News. The build has failed. Please check the Jenkins console logs.",
+                             to: "${env.EMAIL}"
+                }
+            }
+        }
+    }
 }
