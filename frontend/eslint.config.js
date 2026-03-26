@@ -15,7 +15,6 @@ export default defineConfig([
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
     ],
-    "plugins": ["@typescript-eslint"],
     rules: {
       "@typescript-eslint/no-unused-vars": ["off"],
       'no-unused-vars': 'off',

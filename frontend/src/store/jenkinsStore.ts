@@ -4,13 +4,15 @@ import type { APIResponse } from "../utils/apiResponseType";
 import { useJWTTokenStore } from "./jwtTokenStore";
 
 interface JenkinsStoreState {
+  jenkins_job_status: () => Promise<APIResponse<Record<string, unknown>>>;
   jenkins_start_build: (
     repo_url: string,
     branch: string
   ) => Promise<APIResponse<{build_number: number}>>;
   jenkins_console_output: (build_number: number) => Promise<APIResponse<string>>;
-  jenkins_job_status: () => Promise<APIResponse<any>>;
-  jenkins_per_build_status: (build_number: number) => Promise<APIResponse<any>>;
+  jenkins_per_build_status: (
+    build_number: number
+  ) => Promise<APIResponse<Record<string, unknown>>>;
 }
 
 export const useJenkinsStore = create<JenkinsStoreState>()(
@@ -73,7 +75,9 @@ export const useJenkinsStore = create<JenkinsStoreState>()(
         }
       },
 
-      jenkins_job_status: async (): Promise<APIResponse<any>> => {
+      jenkins_job_status: async (): Promise<
+        APIResponse<Record<string, unknown>>
+      > => {
         try {
           const token = useJWTTokenStore.getState().jwtToken;
           if (!token) throw new Error("No token found");
@@ -86,7 +90,9 @@ export const useJenkinsStore = create<JenkinsStoreState>()(
               },
             }
           );
-          const data = (await response.json()) as APIResponse<any>;
+          const data = (await response.json()) as APIResponse<
+            Record<string, unknown>
+          >;
           if (response.ok && data.status_response === 200 && data.data) {
             return data;
           }
@@ -97,7 +103,9 @@ export const useJenkinsStore = create<JenkinsStoreState>()(
         }
       },
 
-      jenkins_per_build_status: async (build_number: number): Promise<APIResponse<any>> => {
+      jenkins_per_build_status: async (
+        build_number: number
+      ): Promise<APIResponse<Record<string, unknown>>> => {
         try {
           const token = useJWTTokenStore.getState().jwtToken;
           if (!token) throw new Error("No token found");
@@ -112,7 +120,9 @@ export const useJenkinsStore = create<JenkinsStoreState>()(
               body: JSON.stringify({ build_number: build_number }),
             }
           );
-          const data = (await response.json()) as APIResponse<any>;
+          const data = (await response.json()) as APIResponse<
+            Record<string, unknown>
+          >;
           if (response.ok && data.status_response === 200 && data.data) {
             return data;
           }

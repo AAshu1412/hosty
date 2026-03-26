@@ -14,7 +14,7 @@ export type GitHubUser = {
   }
   
   export type User = {
-    _id: string; // MongoDB ObjectId
+    _id: string;
     // access_token: string;
     // access_token_expires_in: number;
     // refresh_token?: string;
@@ -25,8 +25,7 @@ export type GitHubUser = {
     // email: string | null;
     // isAdmin: boolean;
     user: GitHubUser;
-    repos: any[]; // GitHub repo objects
-    // __v?: number; // Mongoose version key
+    repos: GitHubRepo[];
   }
 
   export type GitHubRepo = {
@@ -99,7 +98,15 @@ export type GitHubUser = {
     archived: boolean;
     disabled: boolean;
     open_issues_count: number;
-    license: any | null;
+    license:
+      | {
+          key: string;
+          name: string;
+          spdx_id: string | null;
+          url: string | null;
+          node_id: string | null;
+        }
+      | null;
     allow_forking: boolean;
     is_template: boolean;
     web_commit_signoff_required: boolean;
