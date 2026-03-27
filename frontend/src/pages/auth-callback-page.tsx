@@ -37,12 +37,14 @@ export function AuthCallbackPage() {
         }
 
         const latestStatus = useAuthStore.getState().sessionStatus;
+        console.log("auth callback page latestStatus: ", latestStatus);
         if (latestStatus === "needs_onboarding") {
           navigate("/onboarding", { replace: true });
           return;
         }
-
+        console.log("auth callback page navigating to projects");
         navigate("/projects", { replace: true });
+        console.log("auth callback page navigated to projects");
       } catch (error) {
         if (!isActive) {
           return;

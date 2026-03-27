@@ -13,7 +13,7 @@ export type GitHubUser = {
     html_url: string;
   }
   
-  export type User = {
+  export type User = GitHubUser & {
     _id: string;
     // access_token: string;
     // access_token_expires_in: number;
@@ -24,7 +24,7 @@ export type GitHubUser = {
     // id: number;
     // email: string | null;
     // isAdmin: boolean;
-    user: GitHubUser;
+    // user: GitHubUser;
     repos: GitHubRepo[];
   }
 

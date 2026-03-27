@@ -42,7 +42,7 @@ export const useAuthStore = create<AuthStoreState>()(
 
       bootstrapSession: async () => {
         const token = useJWTTokenStore.getState().jwtToken;
-
+        console.log("bootstrapSession token: ", token);
         if (!token) {
           set({
             user: null,
@@ -56,16 +56,20 @@ export const useAuthStore = create<AuthStoreState>()(
           sessionError: null,
           sessionStatus: "bootstrapping",
         });
-
+console.log("bootstrapSession try to get user");
         try {
           const response = await get().getUser();
-          const hasEmail = Boolean(response.data?.user.email?.trim());
+          console.log("bootstrapSession response: ", JSON.stringify(response, null, 2));
 
+          const hasEmail = response.data?.email ? true : false;
+console.log("bootstrapSession hasEmail: ", hasEmail);
           set({
             user: response.data,
             sessionStatus: hasEmail ? "authenticated" : "needs_onboarding",
           });
+          console.log("bootstrapSession set user and sessionStatus");
         } catch (error) {
+          console.log("bootstrapSession error: ", error);
           useJWTTokenStore.getState().clearToken();
           set({
             user: null,
@@ -98,6 +102,7 @@ export const useAuthStore = create<AuthStoreState>()(
           console.log("data: ", JSON.stringify(data, null, 2));
 
           if (response.ok && data.status_response === 201 && data.token) {
+            console.log("github callback successful and token: ", data.token);
             useJWTTokenStore.getState().storeTokenInLS(data.token);
             set({
               sessionStatus: "bootstrapping",
