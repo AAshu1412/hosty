@@ -67,7 +67,7 @@ export function TopBar({ title }: TopBarProps) {
             <img
               alt="User avatar"
               className="h-full w-full object-cover"
-              src={session.user.avatar_url}
+              src={session.user?.avatar_url ?? undefined}
             />
           </div>
         </div>

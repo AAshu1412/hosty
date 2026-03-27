@@ -8,7 +8,8 @@ interface JenkinsStoreState {
   jenkins_job_status: () => Promise<APIResponse<Record<string, unknown>>>;
   jenkins_start_build: (
     repo_url: string,
-    branch: string
+    branch: string,
+    subDirectory?: string
   ) => Promise<APIResponse<{build_number: number}>>;
   jenkins_console_output: (build_number: number) => Promise<APIResponse<string>>;
   jenkins_per_build_status: (
@@ -21,7 +22,8 @@ export const useJenkinsStore = create<JenkinsStoreState>()(
     () => ({
       jenkins_start_build: async (
         repo_url: string,
-        branch: string
+        branch: string,
+        subDirectory?: string
       ): Promise<APIResponse<{build_number: number}>> => {
         try {
           const token = useJWTTokenStore.getState().jwtToken;
@@ -34,7 +36,11 @@ export const useJenkinsStore = create<JenkinsStoreState>()(
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ repo_url: repo_url, branch: branch }),
+              body: JSON.stringify({
+                repo_url: repo_url,
+                branch: branch,
+                subDirectory: subDirectory ?? null,
+              }),
             }
           );
 

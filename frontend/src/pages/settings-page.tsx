@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { Clock3, MapPin, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import { ShieldCheck, Trash2, UserRound } from "lucide-react";
 
 import { NotificationToggle } from "@/components/settings/notification-toggle";
-import { InfoRow } from "@/components/shared/info-row";
 import { Panel } from "@/components/shared/panel";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Button } from "@/components/ui/button";

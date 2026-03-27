@@ -2,6 +2,7 @@ import { useDeferredValue, useState } from "react";
 import { Plus } from "lucide-react";
 
 import { ProjectCard } from "@/components/projects/project-card";
+import { NewProjectDialog } from "@/components/projects/new-project-dialog";
 import { ProjectStats } from "@/components/projects/project-stats";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { SearchInput } from "@/components/shared/search-input";
@@ -15,6 +16,7 @@ const environmentFilters = ["All", "Production", "Preview", "Staging"] as const;
 export function ProjectsPage() {
   const { data: projects, isLoading, error } = useProjects();
   const [searchValue, setSearchValue] = useState("");
+  const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
   const [environmentFilter, setEnvironmentFilter] =
     useState<(typeof environmentFilters)[number]>("All");
   const deferredSearch = useDeferredValue(searchValue);
@@ -35,12 +37,17 @@ export function ProjectsPage() {
 
   return (
     <div className="space-y-8">
+      <NewProjectDialog
+        onOpenChange={setIsNewProjectDialogOpen}
+        open={isNewProjectDialogOpen}
+      />
+
       <SectionHeading
         eyebrow="Workspace Fleet"
         title="Projects"
         description="Manage your application fleet, recent deploys, and shipping health from one cohesive control surface."
         action={
-          <Button>
+          <Button onClick={() => setIsNewProjectDialogOpen(true)} type="button">
             <Plus className="h-4 w-4" />
             New project
           </Button>
