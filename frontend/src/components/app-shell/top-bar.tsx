@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 
 import { SearchInput } from "@/components/shared/search-input";
 import { useAuthStore } from "@/store/authStore";
+import { useSession } from "@/hooks/use-session";
 
 interface TopBarProps {
   title: string;
 }
 
 export function TopBar({ title }: TopBarProps) {
+  const session = useSession();
   const clearSession = useAuthStore((state) => state.clearSession);
   const navigate = useNavigate();
 
@@ -65,7 +67,7 @@ export function TopBar({ title }: TopBarProps) {
             <img
               alt="User avatar"
               className="h-full w-full object-cover"
-              src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80"
+              src={session.user.avatar_url}
             />
           </div>
         </div>
