@@ -95,6 +95,7 @@ export const useAuthStore = create<AuthStoreState>()(
           );
 
           const data = (await response.json()) as APIResponse<null>;
+          console.log("data: ", JSON.stringify(data, null, 2));
 
           if (response.ok && data.status_response === 201 && data.token) {
             useJWTTokenStore.getState().storeTokenInLS(data.token);

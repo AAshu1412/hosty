@@ -28,6 +28,7 @@ export function AuthCallbackPage() {
 
     const completeAuthentication = async () => {
       try {
+        console.log("Code received:", code);
         await githubCallback(code);
         await bootstrapSession();
 

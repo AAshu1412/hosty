@@ -4,7 +4,8 @@ const {User} = require("../models/user-model");
 
 const github_callback = async (req, res) => {
   const { code } = req.body;
-
+console.log("code: ", code);
+console.log("code type: ", typeof code);
   try {
     // 1. Exchange code for token
     const tokenResponse = await fetch(
