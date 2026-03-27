@@ -8,6 +8,7 @@ import { SearchInput } from "@/components/shared/search-input";
 import { Button } from "@/components/ui/button";
 import { useProjects } from "@/hooks/use-dashboard-data";
 import { cn } from "@/lib/utils";
+import GithubAuthButton from "@/components/GithubAuthButton.tsx";
 
 const environmentFilters = ["All", "Production", "Preview", "Staging"] as const;
 
@@ -62,6 +63,7 @@ export function ProjectsPage() {
           placeholder="Search projects, domains, or frameworks..."
           value={searchValue}
         />
+        <GithubAuthButton />
 
         <div className="flex flex-wrap gap-2">
           {environmentFilters.map((filter) => (

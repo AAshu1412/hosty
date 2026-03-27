@@ -30,7 +30,7 @@ const jenkins_start_build = async (req, res) => {
         const nextBuildNumber = parseInt(lastBuildDetail.data.number) + 1 || 1; // ✅ Fixed tonumber → parseInt
         const now = Date.now();
 
-         const updateResult = await User.updateOne(
+        const updateResult = await User.updateOne(
             {
               _id: userData._id,
               "repos.repo_url": repo_url,
@@ -42,7 +42,7 @@ const jenkins_start_build = async (req, res) => {
                 "repos.$.updated_at": now,
                 "repos.$.build_number": nextBuildNumber
               },
-              $addToSet: {  
+              $push: {  // ✅ $push array element (not $addToSet for objects)
                 "repos.$.number_of_builds": {build: nextBuildNumber, created_at: now}
               }
             }
@@ -65,7 +65,7 @@ const jenkins_start_build = async (req, res) => {
                 build_number: nextBuildNumber,
                 created_at: now,
                 updated_at: now,
-                number_of_builds: [nextBuildNumber]
+                number_of_builds: [{build: nextBuildNumber, created_at: now}]
               }
             }
           }
