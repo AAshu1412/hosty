@@ -70,20 +70,20 @@ export function OnboardingPage() {
             </p>
             <div className="mt-3 flex items-center gap-3">
               <div className="h-11 w-11 overflow-hidden rounded-2xl border border-outline-variant/10 bg-surface-container-high">
-                {session.user?.user.avatar_url ? (
+                {session.user?.avatar_url ? (
                   <img
-                    alt={session.user.user.name}
+                    alt={session.user.name}
                     className="h-full w-full object-cover"
-                    src={session.user.user.avatar_url}
+                    src={session.user.avatar_url}
                   />
                 ) : null}
               </div>
               <div>
                 <p className="text-sm font-semibold text-on-surface">
-                  {session.user?.user.name || session.user?.user.username}
+                  {session.user?.name || session.user?.username}
                 </p>
                 <p className="text-sm text-on-surface-variant">
-                  @{session.user?.user.username}
+                  @{session.user?.username}
                 </p>
               </div>
             </div>
