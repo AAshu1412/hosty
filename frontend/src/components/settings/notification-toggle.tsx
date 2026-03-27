@@ -47,7 +47,7 @@ export function NotificationToggle({
         <span
           className={cn(
             "absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform",
-            preference.enabled ? "translate-x-[22px]" : "translate-x-0.5"
+            preference.enabled ? "translate-x-[1px]" : "-translate-x-4"
           )}
         />
       </button>
