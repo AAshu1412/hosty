@@ -1,11 +1,17 @@
-const fs = require("fs").promises;
-const path = require("path");
 const {User} = require("../models/user-model");
 
 const github_callback = async (req, res) => {
   const { code } = req.body;
 console.log("code: ", code);
 console.log("code type: ", typeof code);
+
+  if (!code) {
+    return res.status(400).json({
+      error: "GitHub authorization code is required.",
+      status_response: 400,
+    });
+  }
+
   try {
     // 1. Exchange code for token
     const tokenResponse = await fetch(
@@ -27,8 +33,14 @@ console.log("code type: ", typeof code);
     const tokenData = await tokenResponse.json();
     const access_token = tokenData.access_token;
 
-    if (!access_token) {
-      return res.status(400).json({ error: "Failed to get token" });
+    if (!tokenResponse.ok || !access_token) {
+      return res.status(400).json({
+        error:
+          tokenData.error_description ||
+          tokenData.error ||
+          "Failed to get token",
+        status_response: 400,
+      });
     }
 
     // 2. Get user info
@@ -40,12 +52,14 @@ console.log("code type: ", typeof code);
     });
     const user = await userResponse.json();
 
-    const userExist = await User.findOne({ id: user.id, username: user.login });
-    if (userExist) {
-      return res.status(500).json({ msg: "user already exists" });
+    if (!userResponse.ok || !user?.id || !user?.login) {
+      return res.status(400).json({
+        error: user.message || "Failed to fetch authenticated GitHub user.",
+        status_response: 400,
+      });
     }
 
-    const userCreated = await User.create({
+    const userPayload = {
       access_token: tokenData.access_token,
       access_token_expires_in: tokenData.expires_in,
       refresh_token: tokenData.refresh_token || null,
@@ -60,16 +74,28 @@ console.log("code type: ", typeof code);
         node_id: user.node_id,
         email: user.email || null,
         type: user.type,
-        name: user.name,
-        user_view_type: user.user_view_type,
+        name: user.name || user.login,
+        user_view_type: user.user_view_type || "public",
         bio: user.bio || null,
         location: user.location || null,
         notification_email: user.notification_email || null,
         avatar_url: user.avatar_url || null,
         html_url: user.html_url,
       },
-      repos: [],
-    });
+    };
+
+    let userRecord = await User.findOne({ id: user.id });
+    const isExistingUser = Boolean(userRecord);
+
+    if (userRecord) {
+      userRecord.set(userPayload);
+      await userRecord.save();
+    } else {
+      userRecord = await User.create({
+        ...userPayload,
+        repos: [],
+      });
+    }
 
     console.log("\n\n########## *******User Created******* ##############\n\n");
     console.log("user:", JSON.stringify(user, null, 2));
@@ -103,16 +129,18 @@ console.log("code type: ", typeof code);
     // console.log("✅ Saved to ashu.json | Repos:", repo.length);
     // console.log("--------------------------------------------------------\n\n")
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    const created_token = await userCreated.generateToken();
+    const created_token = await userRecord.generateToken();
 
     console.log("#######################\ncreated_token:", created_token);
     console.log(
       "\n\n########################################################\n\n"
     );
 
-    res.status(201).json({
-      msg: "user created successfully",
-      status_response: 201,
+    res.status(isExistingUser ? 200 : 201).json({
+      msg: isExistingUser
+        ? "user authenticated successfully"
+        : "user created successfully",
+      status_response: isExistingUser ? 200 : 201,
       token: created_token,
     });
   } catch (error) {

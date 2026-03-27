@@ -5,6 +5,7 @@ import type {
   GitHubRepoContent,
   GitHubRepoBranch,
 } from "../utils/userType";
+import { SERVER_URL } from "../lib/constants";
 import type { APIResponse } from "../utils/apiResponseType";
 import { useJWTTokenStore } from "./jwtTokenStore";
 
@@ -38,7 +39,7 @@ export const useGithubStore = create<GithubStoreState>()(
           const token = useJWTTokenStore.getState().jwtToken;
           if (!token) throw new Error("No token found");
           const response = await fetch(
-            "http://localhost:5000/api/github/userRepos",
+            `${SERVER_URL}/api/github/userRepos`,
             {
               method: "GET",
               headers: {
@@ -71,7 +72,7 @@ export const useGithubStore = create<GithubStoreState>()(
           const token = useJWTTokenStore.getState().jwtToken;
           if (!token) throw new Error("No token found");
           const response = await fetch(
-            `http://localhost:5000/api/github/repoContent`,
+            `${SERVER_URL}/api/github/repoContent`,
             {
               method: "POST",
               headers: {
@@ -112,7 +113,7 @@ export const useGithubStore = create<GithubStoreState>()(
           const token = useJWTTokenStore.getState().jwtToken;
           if (!token) throw new Error("No token found");
           const response = await fetch(
-            `http://localhost:5000/api/github/repoContentPath`,
+            `${SERVER_URL}/api/github/repoContentPath`,
             {
               method: "POST",
               headers: {
@@ -149,7 +150,7 @@ export const useGithubStore = create<GithubStoreState>()(
           const token = useJWTTokenStore.getState().jwtToken;
           if (!token) throw new Error("No token found");
           const response = await fetch(
-            `http://localhost:5000/api/github/repoBranch`,
+            `${SERVER_URL}/api/github/repoBranch`,
             {
               method: "POST",
               headers: {

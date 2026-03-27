@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { SERVER_URL } from "@/lib/constants";
 
 function GithubAuthButton() {
   // Native URL params - NO ROUTER NEEDED
@@ -19,7 +20,7 @@ function GithubAuthButton() {
 
   const exchangeCode = async (code: string) => {
     try {
-      const response = await fetch('http://localhost:5000/api/github/callback', {
+      const response = await fetch(`${SERVER_URL}/api/github/callback`, {
         method: 'POST',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code }),  // ✅ FIXED: Object!
@@ -31,12 +32,14 @@ function GithubAuthButton() {
 
       const data = await response.json();
       console.log("Data received:", JSON.stringify(data, null, 2));
-      const { access_token, user } = data;
+      const { token, user } = data;
       
-      console.log('✅ Token:', access_token?.slice(-10));
+      console.log('✅ Token:', token?.slice(-10));
       console.log('✅ User:', user?.login);
       
-      localStorage.setItem('github_token', access_token);
+      if (token) {
+        localStorage.setItem('github_token', token);
+      }
       
       // Clear URL params
       window.history.replaceState({}, '', window.location.pathname);

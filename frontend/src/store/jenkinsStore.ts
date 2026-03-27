@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import { SERVER_URL } from "../lib/constants";
 import type { APIResponse } from "../utils/apiResponseType";
 import { useJWTTokenStore } from "./jwtTokenStore";
 
@@ -26,7 +27,7 @@ export const useJenkinsStore = create<JenkinsStoreState>()(
           const token = useJWTTokenStore.getState().jwtToken;
           if (!token) throw new Error("No token found");
           const response = await fetch(
-            `http://localhost:5000/api/jenkins/startBuild`,
+            `${SERVER_URL}/api/jenkins/startBuild`,
             {
               method: "POST",
               headers: {
@@ -54,7 +55,7 @@ export const useJenkinsStore = create<JenkinsStoreState>()(
           const token = useJWTTokenStore.getState().jwtToken;
           if (!token) throw new Error("No token found");
           const response = await fetch(
-            `http://localhost:5000/api/jenkins/consoleOutput`,
+            `${SERVER_URL}/api/jenkins/consoleOutput`,
             {
               method: "POST",
               headers: {
@@ -82,7 +83,7 @@ export const useJenkinsStore = create<JenkinsStoreState>()(
           const token = useJWTTokenStore.getState().jwtToken;
           if (!token) throw new Error("No token found");
           const response = await fetch(
-            `http://localhost:5000/api/jenkins/jobStatus`,
+            `${SERVER_URL}/api/jenkins/jobStatus`,
             {
               method: "GET",
               headers: {
@@ -110,7 +111,7 @@ export const useJenkinsStore = create<JenkinsStoreState>()(
           const token = useJWTTokenStore.getState().jwtToken;
           if (!token) throw new Error("No token found");
           const response = await fetch(
-            `http://localhost:5000/api/jenkins/perBuildStatus`,
+            `${SERVER_URL}/api/jenkins/perBuildStatus`,
             {
               method: "POST",
               headers: {

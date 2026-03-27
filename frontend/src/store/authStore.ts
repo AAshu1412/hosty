@@ -101,7 +101,11 @@ console.log("bootstrapSession hasEmail: ", hasEmail);
           const data = (await response.json()) as APIResponse<null>;
           console.log("data: ", JSON.stringify(data, null, 2));
 
-          if (response.ok && data.status_response === 201 && data.token) {
+          if (
+            response.ok &&
+            (data.status_response === 200 || data.status_response === 201) &&
+            data.token
+          ) {
             console.log("github callback successful and token: ", data.token);
             useJWTTokenStore.getState().storeTokenInLS(data.token);
             set({
@@ -111,7 +115,7 @@ console.log("bootstrapSession hasEmail: ", hasEmail);
           }
 
           throw new Error(
-            "Invalid github callback data received: " + data.error
+            data.error || "Invalid github callback data received."
           );
         } catch (error) {
           console.error("GitHub callback failed:", error);
