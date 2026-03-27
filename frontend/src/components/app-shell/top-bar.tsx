@@ -1,12 +1,22 @@
 import { Bell, CircleHelp, FileText, MessageSquareMore } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import { SearchInput } from "@/components/shared/search-input";
+import { useAuthStore } from "@/store/authStore";
 
 interface TopBarProps {
   title: string;
 }
 
 export function TopBar({ title }: TopBarProps) {
+  const clearSession = useAuthStore((state) => state.clearSession);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    clearSession();
+    navigate("/login");
+  };
+
   return (
     <header className="sticky top-0 z-30 border-b border-outline-variant/10 bg-surface/80 backdrop-blur-xl">
       <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-10">
@@ -43,6 +53,13 @@ export function TopBar({ title }: TopBarProps) {
           </button>
           <button className="rounded-2xl p-2 transition-colors hover:bg-surface-container hover:text-on-surface">
             <Bell className="h-4 w-4" />
+          </button>
+          <button
+            className="hidden rounded-2xl border border-outline-variant/15 bg-surface-container-low px-3 py-2 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface sm:inline-flex"
+            onClick={handleLogout}
+            type="button"
+          >
+            Logout
           </button>
           <div className="h-9 w-9 overflow-hidden rounded-2xl border border-outline-variant/15 bg-surface-container-high">
             <img
