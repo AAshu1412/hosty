@@ -8,8 +8,10 @@ import { SectionHeading } from "@/components/shared/section-heading";
 import { Button } from "@/components/ui/button";
 import { useSettingsData } from "@/hooks/use-dashboard-data";
 import type { NotificationPreference } from "@/types/dashboard";
+import { useSession } from "@/hooks/use-session";
 
 export function SettingsPage() {
+  const session = useSession();
   const { data, isLoading, error } = useSettingsData();
   const [notificationOverrides, setNotificationOverrides] = useState<
     Record<string, boolean>
@@ -69,7 +71,7 @@ export function SettingsPage() {
                 <img
                   alt={data.profile.fullName}
                   className="h-full w-full object-cover"
-                  src={data.profile.avatar}
+                  src={session.user?.avatar_url || ""}
                 />
               </div>
               <div className="space-y-2">
@@ -77,12 +79,12 @@ export function SettingsPage() {
                   Account Profile
                 </p>
                 <h3 className="text-2xl font-bold tracking-[-0.05em] text-on-surface">
-                  {data.profile.fullName}
+                  {session.user?.name}
                 </h3>
-                <p className="text-sm text-on-surface-variant">{data.profile.email}</p>
-                <span className="inline-flex rounded-full border border-tertiary-container/20 bg-tertiary-container/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-tertiary-container">
+                <p className="text-sm text-on-surface-variant">{session.user?.email}</p>
+                {/* <span className="inline-flex rounded-full border border-tertiary-container/20 bg-tertiary-container/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-tertiary-container">
                   {data.profile.plan}
-                </span>
+                </span> */}
               </div>
             </div>
 
@@ -94,7 +96,7 @@ export function SettingsPage() {
                   </span>
                   <input
                     className="w-full rounded-2xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface outline-none transition-colors focus:border-primary/30"
-                    defaultValue={data.profile.fullName}
+                    defaultValue={session.user?.name}
                     type="text"
                   />
                 </label>
@@ -104,7 +106,7 @@ export function SettingsPage() {
                   </span>
                   <input
                     className="w-full rounded-2xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface outline-none transition-colors focus:border-primary/30"
-                    defaultValue={data.profile.username}
+                    defaultValue={session.user?.username}
                     type="text"
                   />
                 </label>
@@ -116,16 +118,16 @@ export function SettingsPage() {
                 </span>
                 <input
                   className="w-full rounded-2xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface outline-none transition-colors focus:border-primary/30"
-                  defaultValue={data.profile.email}
+                  defaultValue={session.user?.email || ""}
                   type="email"
                 />
               </label>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <InfoRow icon={MapPin} label="Location" value={data.profile.location} />
-              <InfoRow icon={Clock3} label="Timezone" value={data.profile.timezone} />
-            </div>
+            {/* <div className="grid gap-4 sm:grid-cols-2">
+              <InfoRow icon={MapPin} label="Location" value={session.user?.location} />
+              <InfoRow icon={Clock3} label="Timezone" value={session.user?.timezone} />
+            </div> */}
 
             <Button>Save changes</Button>
           </div>
