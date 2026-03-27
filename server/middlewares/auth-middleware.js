@@ -32,7 +32,12 @@ const authMiddleware = async (req, res, next) => {
 
     console.log("Data after verifying:", userData);
 
-    req.user = {...userData.user, repos: userData.repos, _id: userData._id};
+    req.user = {
+      ...userData.user,
+      repos: userData.repos,
+      _id: userData._id,
+      has_completed_onboarding: userData.has_completed_onboarding,
+    };
     req.token = token;
     req.userID = userData._id;
     req.access_token = userData.access_token;

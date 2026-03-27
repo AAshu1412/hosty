@@ -15,6 +15,7 @@ export type GitHubUser = {
   
   export type User = GitHubUser & {
     _id: string;
+    has_completed_onboarding: boolean;
     // access_token: string;
     // access_token_expires_in: number;
     // refresh_token?: string;

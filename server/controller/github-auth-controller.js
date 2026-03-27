@@ -59,6 +59,11 @@ console.log("code type: ", typeof code);
       });
     }
 
+    let userRecord = await User.findOne({ id: user.id });
+    const isExistingUser = Boolean(userRecord);
+    const resolvedEmail =
+      user.email || userRecord?.email || userRecord?.user?.email || null;
+
     const userPayload = {
       access_token: tokenData.access_token,
       access_token_expires_in: tokenData.expires_in,
@@ -67,12 +72,14 @@ console.log("code type: ", typeof code);
       token_type: tokenData.token_type,
       username: user.login,
       id: user.id,
-      email: user.email || null,
+      email: resolvedEmail,
+      has_completed_onboarding:
+        userRecord?.has_completed_onboarding || Boolean(resolvedEmail),
       user: {
         username: user.login,
         id: user.id,
         node_id: user.node_id,
-        email: user.email || null,
+        email: resolvedEmail,
         type: user.type,
         name: user.name || user.login,
         user_view_type: user.user_view_type || "public",
@@ -83,9 +90,6 @@ console.log("code type: ", typeof code);
         html_url: user.html_url,
       },
     };
-
-    let userRecord = await User.findOne({ id: user.id });
-    const isExistingUser = Boolean(userRecord);
 
     if (userRecord) {
       userRecord.set(userPayload);

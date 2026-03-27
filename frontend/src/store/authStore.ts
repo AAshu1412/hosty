@@ -61,11 +61,14 @@ console.log("bootstrapSession try to get user");
           const response = await get().getUser();
           console.log("bootstrapSession response: ", JSON.stringify(response, null, 2));
 
-          const hasEmail = response.data?.email ? true : false;
-console.log("bootstrapSession hasEmail: ", hasEmail);
+          const hasCompletedOnboarding =
+            response.data?.has_completed_onboarding || Boolean(response.data?.email);
+console.log("bootstrapSession hasCompletedOnboarding: ", hasCompletedOnboarding);
           set({
             user: response.data,
-            sessionStatus: hasEmail ? "authenticated" : "needs_onboarding",
+            sessionStatus: hasCompletedOnboarding
+              ? "authenticated"
+              : "needs_onboarding",
           });
           console.log("bootstrapSession set user and sessionStatus");
         } catch (error) {

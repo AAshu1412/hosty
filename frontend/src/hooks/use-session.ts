@@ -35,7 +35,10 @@ export function useSession(): SessionState {
   }, [bootstrapSession, location.pathname, sessionStatus, token]);
 
   const needsOnboarding = Boolean(
-    token && user && userNeedsOnboarding(user.email)
+    token &&
+      user &&
+      !user.has_completed_onboarding &&
+      userNeedsOnboarding(user.email)
   );
   const isAuthenticated = Boolean(token && user && !needsOnboarding);
   const isBootstrapping = sessionStatus === "bootstrapping";

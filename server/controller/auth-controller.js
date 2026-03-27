@@ -56,22 +56,39 @@ const add_email = async (req, res) => {
   try {
     const id = req.userID;
     const { email } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
 
-    if (!email) {
+    if (!normalizedEmail) {
       return res.status(400).json({ msg: "Email is required" });
     }
 
-    const updateUserEmail = await User.updateOne(
-      { _id: id },
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
       {
         $set: { 
-          email: email,        
-          "user.email": email    
+          email: normalizedEmail,
+          has_completed_onboarding: true,
+          "user.email": normalizedEmail,
         }
-      }
+      },
+      { new: true }
     );
 
-    res.status(200).json({ msg: "email added successfully", status_response: 200 });
+    if (!updatedUser) {
+      return res.status(404).json({
+        error: "User not found",
+        status_response: 404,
+      });
+    }
+
+    res.status(200).json({
+      msg: "email added successfully",
+      status_response: 200,
+      data: {
+        email: updatedUser.email,
+        has_completed_onboarding: updatedUser.has_completed_onboarding,
+      },
+    });
   } catch (error) {
     res.status(500).send({ error: error.message, status_response: 500 });
   }

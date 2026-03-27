@@ -95,6 +95,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         require: false,
     },
+    has_completed_onboarding: {
+        type: Boolean,
+        default: false,
+        require: true,
+    },
     isAdmin: {
         type: Boolean,
         default: false,
