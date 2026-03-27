@@ -19,8 +19,7 @@ export function useSession(): SessionState {
   useEffect(() => {
     const isAuthRoute =
       location.pathname === "/login" ||
-      location.pathname === "/auth/callback" ||
-      location.pathname === "/onboarding";
+      location.pathname === "/auth/callback";
 
     if (!token && sessionStatus !== "anonymous") {
       return;

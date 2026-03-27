@@ -28,7 +28,11 @@ export function ProtectedRoute() {
     return <Navigate replace state={{ from: location }} to="/login" />;
   }
 
-  if (session.needsOnboarding && location.pathname !== "/onboarding") {
+  if (session.needsOnboarding) {
+    if (location.pathname === "/onboarding") {
+      return <Outlet />;
+    }
+
     return <Navigate replace to="/onboarding" />;
   }
 
