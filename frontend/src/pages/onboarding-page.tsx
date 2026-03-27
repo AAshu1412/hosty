@@ -13,13 +13,13 @@ export function OnboardingPage() {
   const session = useSession();
   const addEmail = useAuthStore((state) => state.addEmail);
   const bootstrapSession = useAuthStore((state) => state.bootstrapSession);
-  const [email, setEmail] = useState(session.user?.user.email ?? "");
+  const [email, setEmail] = useState(session.user?.email ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const suggestedEmail = useMemo(
-    () => session.user?.user.email ?? "",
-    [session.user?.user.email]
+    () => session.user?.email ?? "",
+    [session.user?.email]
   );
 
   if (!session.token) {
