@@ -1,9 +1,9 @@
-const {User} = require("../models/user-model");
+const { User } = require("../models/user-model");
 
 const github_callback = async (req, res) => {
   const { code } = req.body;
-console.log("code: ", code);
-console.log("code type: ", typeof code);
+  console.log("code: ", code);
+  console.log("code type: ", typeof code);
 
   if (!code) {
     return res.status(400).json({
@@ -75,6 +75,8 @@ console.log("code type: ", typeof code);
       email: resolvedEmail,
       has_completed_onboarding:
         userRecord?.has_completed_onboarding || Boolean(resolvedEmail),
+      created_at: Date.now(),
+      updated_at: Date.now(),
       user: {
         username: user.login,
         id: user.id,
@@ -92,8 +94,59 @@ console.log("code type: ", typeof code);
     };
 
     if (userRecord) {
-      userRecord.set(userPayload);
-      await userRecord.save();
+      const tokenIssuedAt = userRecord.updated_at || 0;
+      const expiresInMs = (userRecord.access_token_expires_in || 0) * 1000;
+      const isTokenExpired = Date.now() >= tokenIssuedAt + expiresInMs;
+
+      if (isTokenExpired) {
+        if (userRecord.refresh_token) {
+          try {
+            const refreshResponse = await fetch("https://github.com/login/oauth/access_token", {
+              method: "POST",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                client_id: process.env.GITHUB_CLIENT_ID,
+                client_secret: process.env.GITHUB_CLIENT_SECRET,
+                grant_type: "refresh_token",
+                refresh_token: userRecord.refresh_token,
+              }),
+            });
+            const refreshData = await refreshResponse.json();
+
+            if (refreshResponse.ok && refreshData.access_token) {
+              userRecord.access_token = refreshData.access_token;
+              userRecord.access_token_expires_in = refreshData.expires_in;
+              userRecord.refresh_token = refreshData.refresh_token || userRecord.refresh_token;
+              userRecord.refresh_token_expires_in = refreshData.refresh_token_expires_in || userRecord.refresh_token_expires_in;
+            } else {
+              // Fallback to the newly obtained token from the code exchange
+              userRecord.access_token = tokenData.access_token;
+              userRecord.access_token_expires_in = tokenData.expires_in;
+              userRecord.refresh_token = tokenData.refresh_token || userRecord.refresh_token;
+              userRecord.refresh_token_expires_in = tokenData.refresh_token_expires_in || userRecord.refresh_token_expires_in;
+            }
+          } catch (error) {
+            console.error("Failed to refresh token:", error);
+            // Fallback to the newly obtained token from the code exchange
+            userRecord.access_token = tokenData.access_token;
+            userRecord.access_token_expires_in = tokenData.expires_in;
+            userRecord.refresh_token = tokenData.refresh_token || userRecord.refresh_token;
+            userRecord.refresh_token_expires_in = tokenData.refresh_token_expires_in || userRecord.refresh_token_expires_in;
+          }
+        } else {
+          // No refresh token available, use the token from the code exchange
+          userRecord.access_token = tokenData.access_token;
+          userRecord.access_token_expires_in = tokenData.expires_in;
+          userRecord.refresh_token = tokenData.refresh_token;
+          userRecord.refresh_token_expires_in = tokenData.refresh_token_expires_in;
+        }
+
+        userRecord.updated_at = Date.now();
+        await userRecord.save();
+      }
     } else {
       userRecord = await User.create({
         ...userPayload,
@@ -149,7 +202,7 @@ console.log("code type: ", typeof code);
     });
   } catch (error) {
     console.error("❌ Error:", error);
-    res.status(500).json({ error: error.message,status_response:500 });
+    res.status(500).json({ error: error.message, status_response: 500 });
   }
 };
 
@@ -217,7 +270,7 @@ const user_github_repos_content = async (req, res) => {
     res.status(201).json({
       msg: "Repo contents fetched successfully",
       status_response: 200,
-      data:{
+      data: {
         repo_content: repoContentsData,
         repo_name: repo_name
       }
@@ -266,7 +319,7 @@ const user_github__repos_content_path = async (req, res) => {
     res.status(200).json({
       msg: "Repo contents fetched successfully",
       status_response: 200,
-      data:{
+      data: {
         repo_content: repoContentPathData,
         repo_name: repo_name,
         repo_content_path: path
@@ -287,7 +340,7 @@ const user_github_repos_branch = async (req, res) => {
       `https://api.github.com/repos/${userData.username}/${repo_name}/branches`,
       {
         headers: {
-          Authorization: `Bearer ${access_token}`, 
+          Authorization: `Bearer ${access_token}`,
           Accept: "application/json",
         },
       }

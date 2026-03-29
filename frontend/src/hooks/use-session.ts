@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 import { useAuthStore } from "@/store/authStore";
-import { useJWTTokenStore } from "@/store/jwtTokenStore";
+import { useJWTTokenStore, isTokenExpired } from "@/store/jwtTokenStore";
 import type { SessionState } from "@/types/auth";
 
 function userNeedsOnboarding(email: string | null | undefined) {
@@ -22,6 +22,12 @@ export function useSession(): SessionState {
       location.pathname === "/auth/callback";
 
     if (!token && sessionStatus !== "anonymous") {
+      return;
+    }
+
+    if (token && isTokenExpired(token)) {
+      useJWTTokenStore.getState().clearToken();
+      useAuthStore.getState().clearSession();
       return;
     }
 

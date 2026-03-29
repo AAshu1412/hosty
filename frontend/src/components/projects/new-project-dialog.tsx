@@ -52,7 +52,10 @@ export function NewProjectDialog({
   const [success, setSuccess] = useState<DeploymentSuccessState | null>(null);
 
   const selectedRepo = useMemo(
-    () => repos.find((repo) => String(repo.id) === selectedRepoId) ?? null,
+    () =>
+      (Array.isArray(repos) ? repos : []).find(
+        (repo) => String(repo.id) === selectedRepoId
+      ) ?? null,
     [repos, selectedRepoId]
   );
 
@@ -102,7 +105,7 @@ export function NewProjectDialog({
           return;
         }
 
-        const nextRepos = response.data ?? [];
+        const nextRepos = Array.isArray(response.data) ? response.data : [];
         setRepos(nextRepos);
 
         if (nextRepos.length > 0) {
@@ -152,7 +155,7 @@ export function NewProjectDialog({
           return;
         }
 
-        const nextBranches = response.data ?? [];
+        const nextBranches = Array.isArray(response.data) ? response.data : [];
         setBranches(nextBranches);
 
         const hasDefaultBranch = nextBranches.some(
@@ -329,7 +332,7 @@ export function NewProjectDialog({
                 ) : repos.length === 0 ? (
                   <option value="">No repositories available</option>
                 ) : null}
-                {repos.map((repo) => (
+                {(Array.isArray(repos) ? repos : []).map((repo) => (
                   <option key={repo.id} value={String(repo.id)}>
                     {repo.full_name}
                   </option>
@@ -355,12 +358,12 @@ export function NewProjectDialog({
                 >
                   {isLoadingBranches ? (
                     <option value="">Loading branches...</option>
-                  ) : branches.length === 0 ? (
+                  ) : (Array.isArray(branches) ? branches : []).length === 0 ? (
                     <option value={selectedBranch || ""}>
                       {selectedBranch || "No branches available"}
                     </option>
                   ) : (
-                    branches.map((branch) => (
+                    (Array.isArray(branches) ? branches : []).map((branch) => (
                       <option key={branch.name} value={branch.name}>
                         {branch.name}
                       </option>

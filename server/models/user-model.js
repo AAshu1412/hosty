@@ -100,6 +100,14 @@ const userSchema = new mongoose.Schema({
         default: false,
         require: true,
     },
+    created_at: {
+        type: Number,
+        require: true,
+    }, 
+    updated_at: {
+        type: Number,
+        require: true,
+    }, 
     isAdmin: {
         type: Boolean,
         default: false,

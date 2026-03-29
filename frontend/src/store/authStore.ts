@@ -4,7 +4,7 @@ import { SERVER_URL } from "../lib/constants";
 import type { SessionStatus } from "../types/auth";
 import type { User } from "../utils/userType";
 import type { APIResponse } from "../utils/apiResponseType";
-import { useJWTTokenStore } from "./jwtTokenStore";
+import { useJWTTokenStore, isTokenExpired } from "./jwtTokenStore";
 
 interface AuthStoreState {
   bootstrapSession: () => Promise<void>;
@@ -43,7 +43,11 @@ export const useAuthStore = create<AuthStoreState>()(
       bootstrapSession: async () => {
         const token = useJWTTokenStore.getState().jwtToken;
         console.log("bootstrapSession token: ", token);
-        if (!token) {
+        
+        if (!token || isTokenExpired(token)) {
+          if (token) {
+             useJWTTokenStore.getState().clearToken();
+          }
           set({
             user: null,
             sessionError: null,
@@ -56,23 +60,18 @@ export const useAuthStore = create<AuthStoreState>()(
           sessionError: null,
           sessionStatus: "bootstrapping",
         });
-console.log("bootstrapSession try to get user");
         try {
           const response = await get().getUser();
-          console.log("bootstrapSession response: ", JSON.stringify(response, null, 2));
 
           const hasCompletedOnboarding =
             response.data?.has_completed_onboarding || Boolean(response.data?.email);
-console.log("bootstrapSession hasCompletedOnboarding: ", hasCompletedOnboarding);
           set({
             user: response.data,
             sessionStatus: hasCompletedOnboarding
               ? "authenticated"
               : "needs_onboarding",
           });
-          console.log("bootstrapSession set user and sessionStatus");
         } catch (error) {
-          console.log("bootstrapSession error: ", error);
           useJWTTokenStore.getState().clearToken();
           set({
             user: null,
@@ -109,7 +108,6 @@ console.log("bootstrapSession hasCompletedOnboarding: ", hasCompletedOnboarding)
             (data.status_response === 200 || data.status_response === 201) &&
             data.token
           ) {
-            console.log("github callback successful and token: ", data.token);
             useJWTTokenStore.getState().storeTokenInLS(data.token);
             set({
               sessionStatus: "bootstrapping",
