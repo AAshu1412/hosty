@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FolderTree,
   GitBranch,
@@ -34,6 +35,7 @@ export function NewProjectDialog({
   open,
   onOpenChange,
 }: NewProjectDialogProps) {
+  const navigate = useNavigate();
   const getUserGithubRepos = useGithubStore((state) => state.getUserGithubRepos);
   const getUserGithubReposBranch = useGithubStore(
     (state) => state.getUserGithubReposBranch
@@ -282,6 +284,15 @@ export function NewProjectDialog({
         branch: selectedBranch,
         repoFullName: selectedRepo.full_name,
         subDirectory: normalizedSubDirectory || null,
+      });
+
+      // Redirect immediately to project details page for live tracking
+      onOpenChange(false);
+      navigate(`/projects/${selectedRepo.id}`, {
+        state: { 
+          buildNumber: response.data?.build_number ?? 0,
+          repoFullName: selectedRepo.full_name,
+        }
       });
     } catch (submitError) {
       setError(
