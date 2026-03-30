@@ -175,8 +175,24 @@ export function ProjectDetailsPage() {
                     </h4>
                  </div>
                  <div className="p-4 md:p-6 space-y-2">
-                    {deployedRepo?.number_of_builds?.length ? (
-                       deployedRepo.number_of_builds.slice().reverse().map((b: any) => (
+                    {(() => {
+                       const buildsList = [...(deployedRepo?.number_of_builds || [])];
+                       if (deployedRepo?.build_number && !buildsList.find((b: any) => b.build === deployedRepo.build_number)) {
+                          buildsList.push({
+                             build: deployedRepo.build_number,
+                             created_at: deployedRepo.created_at || deployedRepo.updated_at || Date.now()
+                          });
+                       }
+                       
+                       if (!buildsList.length) {
+                          return (
+                            <div className="text-center py-4 text-xs text-on-surface-variant italic opacity-60">
+                              No historical builds located
+                            </div>
+                          );
+                       }
+
+                       return buildsList.slice().reverse().map((b: any) => (
                            <button
                               key={b.build}
                               onClick={() => setActiveBuildNumber(b.build)}
@@ -195,12 +211,8 @@ export function ProjectDetailsPage() {
                                {new Date(b.created_at).toLocaleDateString()}
                              </span>
                            </button>
-                        ))
-                    ) : (
-                      <div className="text-center py-4 text-xs text-on-surface-variant italic opacity-60">
-                        No historical builds located
-                      </div>
-                    )}
+                        ));
+                    })()}
                  </div>
               </div>
             </div>

@@ -31,7 +31,7 @@ export function getPrimaryNavigation(projectId: string): NavItem[] {
       id: "logs",
       label: "Logs",
       mobileLabel: "Logs",
-      href: `/logs?projectId=${projectId}`,
+      href: "/logs",
       icon: ScrollText,
       matches: (pathname) => pathname === "/logs",
     },
