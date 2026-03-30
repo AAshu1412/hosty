@@ -25,9 +25,9 @@ export function ProjectCard({ project }: ProjectCardProps) {
                 <h3 className="text-lg font-bold tracking-[-0.04em] text-on-surface">
                   {project.name}
                 </h3>
-                <p className="font-mono text-xs text-on-surface-variant">
+                <a href={`http://${project.domain}`} target="_blank" rel="noopener noreferrer" className="font-mono text-xs text-on-surface-variant">
                   {project.domain}
-                </p>
+                </a>
               </div>
               <StatusBadge status={project.status} />
             </div>
@@ -51,7 +51,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             </div>
             <p className="mt-2 text-sm font-medium text-on-surface">{project.branch}</p>
           </div>
-          <div className="rounded-2xl border border-outline-variant/10 bg-surface-container-low p-3">
+          {/* <div className="rounded-2xl border border-outline-variant/10 bg-surface-container-low p-3">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-on-surface-variant/70">
               <Globe2 className="h-3.5 w-3.5" />
               Region
@@ -73,7 +73,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
               Errors 24h
             </div>
             <p className="mt-2 text-sm font-medium text-on-surface">{project.errors24h}</p>
-          </div>
+          </div> */}
         </div>
       </div>
 
