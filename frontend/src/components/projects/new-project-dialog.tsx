@@ -13,7 +13,7 @@ import { Panel } from "@/components/shared/panel";
 import { Button } from "@/components/ui/button";
 import { useGithubStore } from "@/store/githubStore";
 import { useJenkinsStore } from "@/store/jenkinsStore";
-import type { GitHubRepo, GitHubRepoBranch } from "@/utils/userType";
+import type { GitHubRepo, GitHubRepoBranch, GitHubRepoContent } from "@/utils/userType";
 
 interface NewProjectDialogProps {
   open: boolean;
@@ -38,6 +38,12 @@ export function NewProjectDialog({
   const getUserGithubReposBranch = useGithubStore(
     (state) => state.getUserGithubReposBranch
   );
+  const getUserGithubReposContent = useGithubStore(
+    (state) => state.getUserGithubReposContent
+  );
+  const getUserGithubReposContentPath = useGithubStore(
+    (state) => state.getUserGithubReposContentPath
+  );
   const jenkinsStartBuild = useJenkinsStore((state) => state.jenkins_start_build);
 
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
@@ -47,6 +53,8 @@ export function NewProjectDialog({
   const [subDirectory, setSubDirectory] = useState("");
   const [isLoadingRepos, setIsLoadingRepos] = useState(false);
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+  const [directories, setDirectories] = useState<GitHubRepoContent[]>([]);
+  const [isLoadingDirs, setIsLoadingDirs] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<DeploymentSuccessState | null>(null);
@@ -190,6 +198,47 @@ export function NewProjectDialog({
       isActive = false;
     };
   }, [getUserGithubReposBranch, open, selectedRepo]);
+
+  useEffect(() => {
+    if (!open || !selectedRepo) {
+      return;
+    }
+
+    let isActive = true;
+
+    const loadDirectories = async () => {
+      setIsLoadingDirs(true);
+      setDirectories([]);
+      
+      try {
+        let response;
+        if (!subDirectory || subDirectory.trim() === "") {
+          response = await getUserGithubReposContent(selectedRepo.name);
+        } else {
+          response = await getUserGithubReposContentPath(selectedRepo.name, subDirectory.trim());
+        }
+
+        if (!isActive) return;
+
+        const contents = response.data?.repo_content ?? [];
+        const dirs = contents.filter((item) => item.type === "dir" || item.type === "symlink");
+        setDirectories(dirs);
+      } catch (loadError) {
+        if (!isActive) return;
+        console.error("Failed to load directories", loadError);
+      } finally {
+        if (isActive) {
+          setIsLoadingDirs(false);
+        }
+      }
+    };
+
+    void loadDirectories();
+
+    return () => {
+      isActive = false;
+    };
+  }, [open, selectedRepo, subDirectory, getUserGithubReposContent, getUserGithubReposContentPath]);
 
   if (!open) {
     return null;
@@ -376,16 +425,44 @@ export function NewProjectDialog({
                 <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-on-surface-variant/60">
                   Deployment Path
                 </span>
-                <input
+                <select
                   className={fieldClassName}
-                  disabled={isSubmitting}
-                  onChange={(event) => setSubDirectory(event.target.value)}
-                  placeholder="frontend or apps/web"
-                  value={subDirectory}
-                />
+                  disabled={isSubmitting || !selectedRepo}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    if (value === "--SELECT-CURRENT--") return;
+                    if (value === "--GO-BACK--") {
+                      const pathParts = subDirectory.split("/").filter(Boolean);
+                      pathParts.pop();
+                      setSubDirectory(pathParts.join("/"));
+                      return;
+                    }
+                    setSubDirectory(value);
+                  }}
+                  value="--SELECT-CURRENT--"
+                >
+                  <option value="--SELECT-CURRENT--">
+                    📂 {subDirectory ? `/${subDirectory}` : "/ (Root)"} {isLoadingDirs ? "(Loading...)" : ""}
+                  </option>
+                  
+                  {subDirectory ? (
+                    <option value="--GO-BACK--">👈 Go up a level</option>
+                  ) : null}
+                  
+                  {directories.length > 0 && (
+                    <option value="--SELECT-CURRENT--" disabled>
+                      --- Select a folder to enter ---
+                    </option>
+                  )}
+                  
+                  {directories.map((dir) => (
+                    <option key={dir.path} value={dir.path}>
+                      📁 {dir.name}
+                    </option>
+                  ))}
+                </select>
                 <p className="text-xs text-on-surface-variant">
-                  Optional. Leave empty to deploy from the repo root. If you use
-                  a nested app, enter its folder path here.
+                  Optional. Select a nested folder inside your repo where your source code is structured.
                 </p>
               </label>
             </div>
