@@ -38,6 +38,8 @@ export interface ProjectSummary {
   errors24h: number;
   team: string;
   region: string;
+  latestBuildNumber?: number;
+  repoFullName?: string;
 }
 
 export interface DeploymentRecord {

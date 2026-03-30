@@ -52,7 +52,9 @@ export function ProjectsPage() {
         visits24h: 0,
         errors24h: 0,
         team: "Personal",
-        region: "us-east-1"
+        region: "us-east-1",
+        latestBuildNumber: repo.build_number,
+        repoFullName: repo.repo_url
       };
     }).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   }, [user]);

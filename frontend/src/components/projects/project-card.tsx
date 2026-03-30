@@ -33,7 +33,10 @@ export function ProjectCard({ project }: ProjectCardProps) {
             </div>
           </div>
           <Button asChild size="icon" variant="ghost">
-            <Link to={`/projects/${project.id}`}>
+            <Link 
+              to={`/projects/${project.id}`} 
+              state={{ buildNumber: project.latestBuildNumber, repoFullName: project.repoFullName }}
+            >
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
