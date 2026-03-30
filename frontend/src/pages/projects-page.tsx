@@ -1,4 +1,4 @@
-import { useDeferredValue, useState } from "react";
+import { useDeferredValue, useState, useEffect, useMemo } from "react";
 import { Plus } from "lucide-react";
 
 import { ProjectCard } from "@/components/projects/project-card";
@@ -7,13 +7,58 @@ import { ProjectStats } from "@/components/projects/project-stats";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { SearchInput } from "@/components/shared/search-input";
 import { Button } from "@/components/ui/button";
-import { useProjects } from "@/hooks/use-dashboard-data";
+import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
+import type { ProjectSummary } from "@/types/dashboard";
 
 const environmentFilters = ["All", "Production", "Preview", "Staging"] as const;
 
 export function ProjectsPage() {
-  const { data: projects, isLoading, error } = useProjects();
+  const user = useAuthStore((state) => state.user);
+  const getUser = useAuthStore((state) => state.getUser);
+  const sessionStatus = useAuthStore((state) => state.sessionStatus);
+  const error = useAuthStore((state) => state.sessionError);
+
+  useEffect(() => {
+    if (sessionStatus === "authenticated") {
+      void getUser();
+    }
+  }, [getUser, sessionStatus]);
+
+  const projects: ProjectSummary[] = useMemo(() => {
+    if (!user || !user.repos) return [];
+    
+    return user.repos.map((repo: any) => {
+      let status: ProjectSummary["status"] = "ready";
+      if (repo.status === "failed" || repo.status === "error") status = "failed";
+      else if (repo.status === "building" || repo.status === "pending") status = "building";
+      else if (repo.status === "success") status = "ready";
+      
+      const repoNameMatch = repo.repo_url?.match(/github\.com\/[^\/]+\/([^\/.]+)/);
+      const repoName = repoNameMatch ? repoNameMatch[1] : `Project-${repo.id}`;
+
+      return {
+        id: String(repo.id),
+        name: repoName,
+        domain: repo.hosted_site_url?.replace(/^https?:\/\//, '').replace(/\/$/, '') || "pending-deployment",
+        description: `Deployed from branch ${repo.branch} by ${repo.username}`,
+        framework: "React",
+        iconKey: "react",
+        branch: repo.branch || "main",
+        lastCommitMessage: `Build #${repo.build_number}`,
+        updatedAt: repo.updated_at ? new Date(repo.updated_at).toLocaleDateString() : "Just now",
+        status: status,
+        environment: "Production" as const,
+        visits24h: 0,
+        errors24h: 0,
+        team: "Personal",
+        region: "us-east-1"
+      };
+    }).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  }, [user]);
+
+  const isLoading = sessionStatus === "bootstrapping" || sessionStatus === "authenticating";
+
   const [searchValue, setSearchValue] = useState("");
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
   const [environmentFilter, setEnvironmentFilter] =
