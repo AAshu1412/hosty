@@ -35,9 +35,9 @@ export function SettingsPage() {
                     className="h-full w-full object-cover"
                     src={user.avatar_url || (user as any).user?.avatar_url || ""}
                   />
-                 ) : (
+                ) : (
                   (user.name || user.username || "U").charAt(0)
-                 )}
+                )}
               </div>
               <div className="space-y-2">
                 <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-on-surface-variant/60">
@@ -78,20 +78,57 @@ export function SettingsPage() {
                 </label>
               </div>
 
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-on-surface-variant/60">
+                    Email
+                  </span>
+                  <input
+                    className="w-full rounded-2xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface outline-none transition-colors opacity-70 cursor-not-allowed"
+                    defaultValue={user.email || (user as any).user?.email || ""}
+                    disabled
+                    type="email"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-on-surface-variant/60">
+                    Location
+                  </span>
+                  <input
+                    className="w-full rounded-2xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface outline-none transition-colors opacity-70 cursor-not-allowed"
+                    defaultValue={(user as any).location || "Not specified"}
+                    disabled
+                    type="text"
+                  />
+                </label>
+              </div>
+
               <label className="space-y-2">
                 <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-on-surface-variant/60">
-                  Email
+                  Bio
+                </span>
+                <textarea
+                  className="w-full rounded-2xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface outline-none transition-colors opacity-70 cursor-not-allowed resize-none"
+                  defaultValue={(user as any).bio || "No bio available"}
+                  disabled
+                  rows={3}
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-on-surface-variant/60">
+                  GitHub Profile
                 </span>
                 <input
                   className="w-full rounded-2xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface outline-none transition-colors opacity-70 cursor-not-allowed"
-                  defaultValue={user.email || (user as any).user?.email || ""}
+                  defaultValue={(user as any).html_url || ""}
                   disabled
-                  type="email"
+                  type="url"
                 />
               </label>
             </div>
 
-            <Button disabled className="opacity-50">Saved via Provider</Button>
+            <Button disabled className="opacity-50">Locked via GitHub Provider</Button>
           </div>
         </Panel>
 
