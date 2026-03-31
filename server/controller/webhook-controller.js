@@ -46,10 +46,10 @@ const jenkins_webhook = async (req, res) => {
       },
       {
         $set: {
-          "repos.$.status": status.toLowerCase(),
+          "repos.$.status": status.toLowerCase() == "failure"? "failed" : status.toLowerCase(),
           "repos.$.hosted_site_url": hosted_site_url || null,
           "repos.$.updated_at": now,
-          "repos.$.number_of_builds.$[buildElem].status": status.toLowerCase()
+          "repos.$.number_of_builds.$[buildElem].status": status.toLowerCase() == "failure"? "failed" : status.toLowerCase()
         }
       },
       {

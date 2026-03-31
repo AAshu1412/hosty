@@ -37,7 +37,7 @@ const DeployedRepoSchema = new mongoose.Schema({
       type: String,
       required: true,
       lowercase: true,
-      enum: ['pending', 'building', 'success', 'failed'] // Optional validation
+      enum: ['pending', 'building', 'success', 'failed','failure'] // Optional validation
     },
     build_number: {
       type: Number,
