@@ -33,7 +33,6 @@ export function LogsPage() {
   const builds = useMemo(() => {
     if (!user || !user.repos) return [];
     console.log("/logs page: "+projectIdMap);
-    console.log("Users: "+JSON.stringify(user));
     
     let allBuilds = user.repos.flatMap((repo: any) => {
       const buildsArray = [...(repo.number_of_builds || [])];
@@ -54,6 +53,8 @@ export function LogsPage() {
          let status = "ready";
          if (b.build === repo.build_number) {
             status = repo.status === "success" ? "ready" : (repo.status === "failed" || repo.status === "error" ? "failed" : "building");
+         } else if (b.status) {
+            status = b.status === "success" ? "ready" : (b.status === "failed" || b.status === "error" ? "failed" : "building");
          }
 
          return {
@@ -89,8 +90,53 @@ export function LogsPage() {
   const [activeBuild, setActiveBuild] = useState<any>(null);
   const [consoleLogs, setConsoleLogs] = useState<string>("");
   const [buildStatus, setBuildStatus] = useState<string | null>(null);
+  
+  const [historyStatusMap, setHistoryStatusMap] = useState<Record<string, string>>({});
+  const fetchedStatusesRef = useRef<Set<string>>(new Set());
 
   const logsEndRef = useRef<HTMLDivElement>(null);
+
+  // Dynamically resolve and cache Jenkins statuses in the background for historical builds that don't have intrinsic backend status saved
+  useEffect(() => {
+     let isSubscribed = true;
+     
+     const resolveStatuses = async () => {
+         for (const b of builds) {
+             const key = `${b.repoId}-${b.buildNumber}`;
+             
+             // Prioritize the live active build object data if it exists natively before querying
+             if (b.status === "failed" || b.status === "error") {
+                 if (!historyStatusMap[key]) setHistoryStatusMap(prev => ({...prev, [key]: "failed"}));
+                 fetchedStatusesRef.current.add(key);
+                 continue;
+             }
+
+             if (fetchedStatusesRef.current.has(key)) continue;
+             fetchedStatusesRef.current.add(key);
+
+             try {
+                const res = await jenkins_per_build_status(b.buildNumber);
+                const netStatus = res.data?.result;
+                let resolved = "ready";
+                
+                if (netStatus === "FAILURE" || netStatus === "ABORTED") resolved = "failed";
+                else if (netStatus === "SUCCESS") resolved = "ready";
+                else if (netStatus === null) resolved = "building";
+
+                if (isSubscribed) {
+                    setHistoryStatusMap(prev => ({...prev, [key]: resolved}));
+                }
+             } catch (e) {
+                if (isSubscribed) {
+                    setHistoryStatusMap(prev => ({...prev, [key]: "ready"}));
+                }
+             }
+         }
+     };
+
+     void resolveStatuses();
+     return () => { isSubscribed = false; };
+  }, [builds, jenkins_per_build_status]);
 
   // Auto-select first build if none selected
   useEffect(() => {
@@ -151,7 +197,6 @@ export function LogsPage() {
       clearInterval(pollInterval);
     };
   }, [activeBuild?.buildNumber, jenkins_console_output, jenkins_per_build_status, getUser]);
-console.log("activeBuild: "+JSON.stringify(activeBuild));
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <SectionHeading
@@ -201,7 +246,7 @@ console.log("activeBuild: "+JSON.stringify(activeBuild));
                              <Terminal className={cn("w-4 h-4", isActive ? "text-primary" : "text-on-surface-variant/70")} />
                              <h4 className={cn("font-bold tracking-tight text-sm", isActive ? "text-primary font-bold" : "text-on-surface")}>{build.repoName}</h4>
                            </div>
-                           <StatusBadge status={build.status as any} />
+                           <StatusBadge status={(historyStatusMap[`${build.repoId}-${build.buildNumber}`] as any) || build.status} />
                         </div>
                         <div className="mt-2.5 flex items-center gap-2.5 text-[11px] font-mono text-on-surface-variant opacity-80">
                            <span className="flex items-center gap-1"><Hash className="w-3 h-3" />{build.buildNumber}</span>

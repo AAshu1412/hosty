@@ -24,7 +24,7 @@ export function ProjectDetailsPage() {
 
   // Fallback to searching user deployed repos if we navigate directly to the page
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const deployedRepo = user?.repos?.find((r: any) => String(r.id) === projectId) as any;
+  const deployedRepo = user?.repos?.find((r: any) => String(r._id || r.id) === projectId) as any;
   const displayRepoName = routeState?.repoFullName || deployedRepo?.repo_url || `Project ${projectId}`;
 
   const defaultBuildNumber = routeState?.buildNumber || deployedRepo?.build_number;

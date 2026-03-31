@@ -43,7 +43,7 @@ const jenkins_start_build = async (req, res) => {
                 "repos.$.build_number": nextBuildNumber
               },
               $push: {  // ✅ $push array element (not $addToSet for objects)
-                "repos.$.number_of_builds": {build: nextBuildNumber, created_at: now}
+                "repos.$.number_of_builds": {build: nextBuildNumber, created_at: now, status: 'pending'}
               }
             }
           );
@@ -65,7 +65,7 @@ const jenkins_start_build = async (req, res) => {
                 build_number: nextBuildNumber,
                 created_at: now,
                 updated_at: now,
-                number_of_builds: [{build: nextBuildNumber, created_at: now}]
+                number_of_builds: [{build: nextBuildNumber, created_at: now, status: 'pending'}]
               }
             }
           }

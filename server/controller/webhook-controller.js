@@ -36,7 +36,7 @@ const jenkins_webhook = async (req, res) => {
     //   }
     // );
 
-    // ✅ 1. Update user.repos status + hosted_site_url
+    // ✅ 1. Update user.repos status + hosted_site_url and sync the status into number_of_builds history
     await User.updateOne(
       {
         _id: userData._id,
@@ -46,10 +46,14 @@ const jenkins_webhook = async (req, res) => {
       },
       {
         $set: {
-          "repos.$.status": status,
+          "repos.$.status": status.toLowerCase(),
           "repos.$.hosted_site_url": hosted_site_url || null,
-          "repos.$.updated_at": now
+          "repos.$.updated_at": now,
+          "repos.$.number_of_builds.$[buildElem].status": status.toLowerCase()
         }
+      },
+      {
+        arrayFilters: [{ "buildElem.build": parseInt(build) }]
       }
     );
 

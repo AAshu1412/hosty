@@ -36,6 +36,7 @@ const DeployedRepoSchema = new mongoose.Schema({
     status: {
       type: String,
       required: true,
+      lowercase: true,
       enum: ['pending', 'building', 'success', 'failed'] // Optional validation
     },
     build_number: {
@@ -51,7 +52,7 @@ const DeployedRepoSchema = new mongoose.Schema({
       required: true // Unix timestamp
     },
     number_of_builds: {
-      type: [{build: Number, created_at: Number}],
+      type: [{build: Number, created_at: Number, status: String}],
       required: true,
       default: []
     }

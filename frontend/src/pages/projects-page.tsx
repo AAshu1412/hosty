@@ -38,7 +38,7 @@ export function ProjectsPage() {
       const repoName = repoNameMatch ? repoNameMatch[1] : `Project-${repo.id}`;
 
       return {
-        id: String(repo.id),
+        id: String(repo._id || repo.id),
         name: repoName,
         domain: repo.hosted_site_url?.replace(/^https?:\/\//, '').replace(/\/$/, '') || "pending-deployment",
         description: `Deployed from branch ${repo.branch} by ${repo.username}`,
