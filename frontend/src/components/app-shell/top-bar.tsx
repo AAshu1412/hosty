@@ -36,15 +36,15 @@ export function TopBar({ title }: TopBarProps) {
           </div>
         </div>
 
-        <div className="hidden flex-1 items-center justify-center lg:flex">
+        {/* <div className="hidden flex-1 items-center justify-center lg:flex">
           <SearchInput
             className="w-full max-w-xl"
             placeholder="Search projects, logs, or teams..."
           />
-        </div>
+        </div> */}
 
         <div className="flex items-center gap-2 text-on-surface-variant">
-          <button className="hidden rounded-2xl p-2 transition-colors hover:bg-surface-container hover:text-on-surface md:inline-flex">
+          {/* <button className="hidden rounded-2xl p-2 transition-colors hover:bg-surface-container hover:text-on-surface md:inline-flex">
             <MessageSquareMore className="h-4 w-4" />
           </button>
           <button className="hidden rounded-2xl p-2 transition-colors hover:bg-surface-container hover:text-on-surface md:inline-flex">
@@ -55,7 +55,7 @@ export function TopBar({ title }: TopBarProps) {
           </button>
           <button className="rounded-2xl p-2 transition-colors hover:bg-surface-container hover:text-on-surface">
             <Bell className="h-4 w-4" />
-          </button>
+          </button> */}
           <button
             className="hidden rounded-2xl border border-outline-variant/15 bg-surface-container-low px-3 py-2 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface sm:inline-flex"
             onClick={handleLogout}
