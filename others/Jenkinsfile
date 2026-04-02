@@ -95,8 +95,8 @@ pipeline {
             // 2. We use single quotes around the JSON payload for the bash curl command
             sh """
                 curl -X POST -H "Content-Type: application/json" \
-                -d '{"build": "${env.BUILD_NUMBER}", "status": "success", "user": "${env.USERNAME}", "user_id": "${env.USER_ID}", "email": "${env.EMAIL}", "hosted_site_url": "http://${env.FOLDER_NAME}.hosty.com", "repo_url":"${env.REPO_URL}", "branch": "${env.BRANCH}", "subDirectory":"${env.SUB_DIR}"}' \
-                http://localhost:5000/api/webhook/jenkinsWebhook/
+                -d '{"build": "${env.BUILD_NUMBER}", "status": "${currentBuild.currentResult}", "user": "${env.USERNAME}", "user_id": "${env.USER_ID}", "email": "${env.EMAIL}", "hosted_site_url": "http://${env.FOLDER_NAME}.hosty.com", "repo_url":"${env.REPO_URL}", "branch": "${env.BRANCH}", "subDirectory":"${env.SUB_DIR}"}' \
+                http://localhost:5001/api/webhook/jenkinsWebhook/
             """
             
             // 3. MUST wrap 'if' statements in a script block!
@@ -113,8 +113,8 @@ pipeline {
             // Added the failure webhook so your Express server knows it failed!
             sh """
                 curl -X POST -H "Content-Type: application/json" \
-                -d '{"build": "${env.BUILD_NUMBER}", "status": "failed", "user": "${env.USERNAME}", "user_id": "${env.USER_ID}", "email": "${env.EMAIL}", "hosted_site_url": "http://${env.FOLDER_NAME}.hosty.com", "repo_url":"${env.REPO_URL}", "branch": "${env.BRANCH}", "subDirectory":"${env.SUB_DIR}"}' \
-                http://localhost:5000/api/webhook/jenkinsWebhook/
+                -d '{"build": "${env.BUILD_NUMBER}", "status": "${currentBuild.currentResult}", "user": "${env.USERNAME}", "user_id": "${env.USER_ID}", "email": "${env.EMAIL}", "hosted_site_url": "http://${env.FOLDER_NAME}.hosty.com", "repo_url":"${env.REPO_URL}", "branch": "${env.BRANCH}", "subDirectory":"${env.SUB_DIR}"}' \
+                http://localhost:5001/api/webhook/jenkinsWebhook/
             """
 
             script {
