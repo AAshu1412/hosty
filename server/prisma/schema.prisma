@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                     Int            @id @default(autoincrement())
+  githubId               BigInt         @unique
+  githubUsername         String         @unique
+  email                  String?
+  accessToken            String
+  accessTokenExpiresIn   BigInt
+  refreshToken           String?
+  refreshTokenExpiresIn  BigInt?
+  tokenType              String
+  hasCompletedOnboarding Boolean        @default(false)
+  isAdmin                Boolean        @default(false)
+  nodeId                 String?
+  accountType            String?
+  name                   String?
+  userViewType           String?
+  bio                    String?
+  location               String?
+  notificationEmail      String?
+  avatarUrl              String?
+  htmlUrl                String?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  repos                  DeployedRepo[]
+}
+
+model DeployedRepo {
+  id                 Int         @id @default(autoincrement())
+  userId             Int
+  repoUrl            String
+  subDirectory       String?
+  branch             String
+  notificationEmail  String?
+  hostedSiteUrl      String
+  currentStatus      BuildStatus @default(pending)
+  currentBuildNumber Int         @default(0)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  builds             Build[]
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Build {
+  id          Int          @id @default(autoincrement())
+  repoId      Int
+  buildNumber Int
+  status      BuildStatus
+  createdAt   DateTime     @default(now())
+  repo        DeployedRepo @relation(fields: [repoId], references: [id], onDelete: Cascade)
+}
+
+enum BuildStatus {
+  pending
+  building
+  success
+  failed
+  failure
+}

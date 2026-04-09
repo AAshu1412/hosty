@@ -1,6 +1,6 @@
 const {User} = require("../models/user-model");
 const bcrypt = require("bcryptjs");
-
+const prisma = require('../utils/db-psql');
 
 // const register = async (req, res) => {
 //     try {
@@ -54,43 +54,45 @@ const bcrypt = require("bcryptjs");
 
 const add_email = async (req, res) => {
   try {
-    const id = req.userID;
+    const id = req.userID; 
     const { email } = req.body;
     const normalizedEmail = email?.trim().toLowerCase();
 
     if (!normalizedEmail) {
-      return res.status(400).json({ msg: "Email is required" });
+      return res.status(400).json({ msg: "Email is required", status_response: 400 });
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      {
-        $set: { 
-          email: normalizedEmail,
-          has_completed_onboarding: true,
-          "user.email": normalizedEmail,
-        }
+    const updatedUser = await prisma.user.update({
+      where: { 
+        id: parseInt(id, 10) // Prisma expects an Integer for the ID!
       },
-      { new: true }
-    );
-
-    if (!updatedUser) {
-      return res.status(404).json({
-        error: "User not found",
-        status_response: 404,
-      });
-    }
+      data: {
+        email: normalizedEmail,
+        hasCompletedOnboarding: true,
+        // Notice we don't have "user.email" here anymore because we flattened the database!
+      }
+    });
 
     res.status(200).json({
       msg: "email added successfully",
       status_response: 200,
       data: {
         email: updatedUser.email,
-        has_completed_onboarding: updatedUser.has_completed_onboarding,
+        has_completed_onboarding: updatedUser.hasCompletedOnboarding, // Mapped to the camelCase Prisma field
       },
     });
+
   } catch (error) {
-    res.status(500).send({ error: error.message, status_response: 500 });
+    // Prisma throws a specific error code (P2025) if the row to update does not exist
+    if (error.code === 'P2025') {
+      return res.status(404).json({
+        error: "User not found",
+        status_response: 404,
+      });
+    }
+
+    console.error("❌ Error adding email:", error);
+    res.status(500).json({ error: error.message, status_response: 500 });
   }
 };
 

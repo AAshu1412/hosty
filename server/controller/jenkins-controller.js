@@ -1,25 +1,17 @@
 const axios = require('axios');
 const {User} = require("../models/user-model");
-
+const prisma = require('../utils/db-psql');
 const jenkins_start_build = async (req, res) => {
-
     const { repo_url, branch, subDirectory } = req.body;
+    
     try {
-
-        // const getCrumb = await axios.get('http://localhost:8090/crumbIssuer/api/json', {
-        //     auth: {
-        //         username: process.env.JENKINS_USERNAME,
-        //         password: process.env.JENKINS_API_TOKEN
-        //     }
-        // });
-
-        // console.log("Crumb: " + JSON.stringify(getCrumb.data,null,2));
-
-        const userData = req.user;
-        const username = userData.username;
-        const user_id = userData.id;
-        const to = userData.email || null;
+        // Mapped from your new authMiddleware
+        const user_internal_id = parseInt(req.userID, 10); // Postgres internal ID
+        const username = req.user.username;
+        const user_github_id = req.user.id;
+        const to = req.user.email || null;
         
+        // 1. Fetch last build number from Jenkins
         const lastBuildDetail = await axios.get(`http://localhost:8090/job/Hosty/lastBuild/api/json`, {
             auth: {
                 username: process.env.JENKINS_USERNAME,
@@ -27,81 +19,95 @@ const jenkins_start_build = async (req, res) => {
             }
         });
 
-        const nextBuildNumber = parseInt(lastBuildDetail.data.number) + 1 || 1; // ✅ Fixed tonumber → parseInt
-        const now = Date.now();
+        const nextBuildNumber = parseInt(lastBuildDetail.data.number) + 1 || 1;
 
-        const updateResult = await User.updateOne(
-            {
-              _id: userData._id,
-              "repos.repo_url": repo_url,
-              "repos.branch": branch
-            },
-            {
-              $set: {
-                "repos.$.status": "pending",
-                "repos.$.updated_at": now,
-                "repos.$.build_number": nextBuildNumber
-              },
-              $push: {  // ✅ $push array element (not $addToSet for objects)
-                "repos.$.number_of_builds": {build: nextBuildNumber, created_at: now, status: 'pending'}
-              }
+        // 2. Check if this repository/branch combination already exists
+        const existingRepo = await prisma.deployedRepo.findFirst({
+            where: {
+                userId: user_internal_id,
+                repoUrl: repo_url,
+                branch: branch
             }
-          );
-  
-      if (updateResult.matchedCount === 0) {
-        await User.updateOne(
-          { _id: userData._id },
-          {
-            $push: {
-              repos: {
-                repo_url,
-                subDirectory: subDirectory || null,
-                branch,
-                email: to,
-                username,
-                id: user_id,
-                hosted_site_url: null,
-                status: 'pending',
-                build_number: nextBuildNumber,
-                created_at: now,
-                updated_at: now,
-                number_of_builds: [{build: nextBuildNumber, created_at: now, status: 'pending'}]
-              }
-            }
-          }
-        );
-      }
+        });
 
-      
+        // 3. Database Update: Nested Writes
+        if (existingRepo) {
+            // Repo exists: Update its status and push a new pending build
+            await prisma.deployedRepo.update({
+                where: { id: existingRepo.id },
+                data: {
+                    currentStatus: 'pending',
+                    currentBuildNumber: nextBuildNumber,
+                    subDirectory: subDirectory || existingRepo.subDirectory, // Update if changed
+                    builds: {
+                        create: {
+                            buildNumber: nextBuildNumber,
+                            status: 'pending'
+                        }
+                    }
+                }
+            });
+        } else {
+            // First time building this repo: Create the Repo and the pending build
+            await prisma.deployedRepo.create({
+                data: {
+                    userId: user_internal_id,
+                    repoUrl: repo_url,
+                    branch: branch,
+                    subDirectory: subDirectory || null,
+                    notificationEmail: to,
+                    hostedSiteUrl: "", // Will be populated when the webhook succeeds!
+                    currentStatus: 'pending',
+                    currentBuildNumber: nextBuildNumber,
+                    builds: {
+                        create: {
+                            buildNumber: nextBuildNumber,
+                            status: 'pending'
+                        }
+                    }
+                }
+            });
+        }
 
-        const buildResponse = await axios.post(`http://localhost:8090/job/Hosty/buildWithParameters?token=${process.env.JENKINS_API_TOKEN}`,
-            { REPO_URL: repo_url, BRANCH: branch, SUB_DIR: subDirectory || null, EMAIL: to || null, USERNAME: username, USER_ID: user_id }, 
+        // 4. Trigger Jenkins
+        // Note: I moved your payload into the `params` object so Jenkins safely reads them as URL query parameters
+        const buildResponse = await axios.post(
+            `http://localhost:8090/job/Hosty/buildWithParameters?token=${process.env.JENKINS_API_TOKEN}`,
+            null, // Jenkins ignores JSON bodies!
             {
+                params: {
+                    REPO_URL: repo_url, 
+                    BRANCH: branch, 
+                    SUB_DIR: subDirectory || "", 
+                    EMAIL: to || "", 
+                    USERNAME: username, 
+                    USER_ID: user_github_id 
+                },
                 auth: {
                     username: process.env.JENKINS_USERNAME,
                     password: process.env.JENKINS_API_TOKEN
                 },
                 headers: {
-                    ["Jenkins-Crumb"]: process.env.JENKINS_CRUMB,  // Header (CSRF protection)
-                    'Content-Type': 'application/x-www-form-urlencoded'
+                    "Jenkins-Crumb": process.env.JENKINS_CRUMB,
+                    "Content-Type": "application/x-www-form-urlencoded"
                 }
             }
         );
-        console.log("\n\n*******************##Jenkins Build Response##************************\n\n");
-        console.log("Build Response: " + JSON.stringify(buildResponse.data,null,2));
-        console.log("\n\n************************************************************\n\n");
 
+        console.log("\n\n*******************##Jenkins Build Response##************************\n\n");
+        console.log("Build Response Status: ", buildResponse.status);
+        console.log("\n\n************************************************************\n\n");
       
         res.status(200).json({ 
             message: 'Build started successfully', 
             status_response: buildResponse.status, 
             data: {
                 build_number: nextBuildNumber,
-              }
+            }
         });
 
     } catch (error) {
-        console.error('❌ Error:', error.message);
+        console.error('❌ Error triggering Jenkins or Database:', error.message);
         res.status(500).json({ 
             status_response: 500,
             error: error.response ? error.response.data : error.message 

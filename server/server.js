@@ -7,7 +7,8 @@ const jenkinsRouter=require("./router/jenkins-router");
 const authRouter=require("./router/auth-router");
 const webhookRouter=require("./router/webhook-router");
 const { FRONTEND_URLS } = require("./constants");
-const connectDb = require("./utils/db");
+// const connectDb = require("./utils/db");
+const prisma = require("./utils/db-psql");
 const errorMiddleWare = require("./middlewares/error-middleware");
 
 const configuredOrigins = process.env.CLIENT_URLS
@@ -47,8 +48,11 @@ app.use(errorMiddleWare);
 
 const PORT = Number(process.env.PORT) || 5001;
 
-connectDb().then(()=>{
+prisma.$connect().then(()=>{
+    console.log("Database connected");
     app.listen(PORT,()=>{
         console.log(`Port is running at ${PORT}`);
     })
+}).catch((error)=>{
+    console.log("Database connection failed",error);
 });

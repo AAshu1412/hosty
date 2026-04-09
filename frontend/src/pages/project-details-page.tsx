@@ -106,8 +106,7 @@ export function ProjectDetailsPage() {
   else if (buildStatus === "SUCCESS") derivedBadgeStatus = "ready";
   else if (buildStatus === "FAILURE") derivedBadgeStatus = "failed";
   else if (deployedRepo?.status === "SUCCESS") derivedBadgeStatus = "ready";
-  else if (deployedRepo?.status === "IN_PROGRESS") derivedBadgeStatus = "building";
-
+  else if (deployedRepo?.status === "IN_PROGRESS") derivedBadgeStatus = "building";                        
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col gap-5">
@@ -178,6 +177,7 @@ export function ProjectDetailsPage() {
                     {(() => {
                        const buildsList = [...(deployedRepo?.number_of_builds || [])];
                        if (deployedRepo?.build_number && !buildsList.find((b: any) => b.build === deployedRepo.build_number)) {
+                       
                           buildsList.push({
                              build: deployedRepo.build_number,
                              created_at: deployedRepo.created_at || deployedRepo.updated_at || Date.now()
@@ -191,7 +191,6 @@ export function ProjectDetailsPage() {
                             </div>
                           );
                        }
-
                        return buildsList.slice().reverse().map((b: any) => (
                            <button
                               key={b.build}

@@ -1,4 +1,11 @@
 node_modules/
 node_moudles
 .env
+.env.local
+.env.development
+.env.test
+.env.production
 ashu.json
+tree.txt
+/generated/prisma
+/generated/

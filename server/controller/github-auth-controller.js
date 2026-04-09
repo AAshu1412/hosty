@@ -1,9 +1,10 @@
 const { User } = require("../models/user-model");
+const prisma = require('../utils/db-psql');
+const { generateToken } = require("../utils/jwt");
 
 const github_callback = async (req, res) => {
   const { code } = req.body;
   console.log("code: ", code);
-  console.log("code type: ", typeof code);
 
   if (!code) {
     return res.status(400).json({
@@ -13,37 +14,29 @@ const github_callback = async (req, res) => {
   }
 
   try {
-    // 1. Exchange code for token
-    const tokenResponse = await fetch(
-      "https://github.com/login/oauth/access_token",
-      {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          client_id: process.env.GITHUB_CLIENT_ID,
-          client_secret: process.env.GITHUB_CLIENT_SECRET,
-          code,
-        }),
-      }
-    );
+    const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code,
+      }),
+    });
 
     const tokenData = await tokenResponse.json();
     const access_token = tokenData.access_token;
 
     if (!tokenResponse.ok || !access_token) {
       return res.status(400).json({
-        error:
-          tokenData.error_description ||
-          tokenData.error ||
-          "Failed to get token",
+        error: tokenData.error_description || tokenData.error || "Failed to get token",
         status_response: 400,
       });
     }
 
-    // 2. Get user info
     const userResponse = await fetch("https://api.github.com/user", {
       headers: {
         Authorization: `Bearer ${access_token}`,
@@ -59,152 +52,83 @@ const github_callback = async (req, res) => {
       });
     }
 
-    let userRecord = await User.findOne({ id: user.id });
-    const isExistingUser = Boolean(userRecord);
-    const resolvedEmail =
-      user.email || userRecord?.email || userRecord?.user?.email || null;
+    // 3. PRISMA UPSERT: Find & Update, or Create if missing
+    // We use BigInt() because GitHub IDs are massive numbers.
+    const githubIdBigInt = BigInt(user.id);
+    const resolvedEmail = user.email || null;
 
-    const userPayload = {
-      access_token: tokenData.access_token,
-      access_token_expires_in: tokenData.expires_in,
-      refresh_token: tokenData.refresh_token || null,
-      refresh_token_expires_in: tokenData.refresh_token_expires_in || null,
-      token_type: tokenData.token_type,
-      username: user.login,
-      id: user.id,
-      email: resolvedEmail,
-      has_completed_onboarding:
-        userRecord?.has_completed_onboarding || Boolean(resolvedEmail),
-      created_at: Date.now(),
-      updated_at: Date.now(),
-      user: {
-        username: user.login,
-        id: user.id,
-        node_id: user.node_id,
-        email: resolvedEmail,
-        type: user.type,
+    // Check if the user already exists to send the correct 200/201 status code later
+    const existingUserCheck = await prisma.user.findUnique({
+      where: { githubId: githubIdBigInt }
+    });
+    const isExistingUser = Boolean(existingUserCheck);
+
+    const userRecord = await prisma.user.upsert({
+      where: { githubId: githubIdBigInt },
+      
+      // UPDATE: If they exist, overwrite their old tokens with the fresh ones
+      update: {
+        accessToken: tokenData.access_token,
+        accessTokenExpiresIn: tokenData.expires_in,
+        refreshToken: tokenData.refresh_token || null,
+        refreshTokenExpiresIn: tokenData.refresh_token_expires_in || null,
+        email: resolvedEmail, 
         name: user.name || user.login,
-        user_view_type: user.user_view_type || "public",
+        avatarUrl: user.avatar_url || null,
         bio: user.bio || null,
         location: user.location || null,
-        notification_email: user.notification_email || null,
-        avatar_url: user.avatar_url || null,
-        html_url: user.html_url,
       },
-    };
-
-    if (userRecord) {
-      const tokenIssuedAt = userRecord.updated_at || 0;
-      const expiresInMs = (userRecord.access_token_expires_in || 0) * 1000;
-      const isTokenExpired = Date.now() >= tokenIssuedAt + expiresInMs;
-
-      if (isTokenExpired) {
-        if (userRecord.refresh_token) {
-          try {
-            const refreshResponse = await fetch("https://github.com/login/oauth/access_token", {
-              method: "POST",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                client_id: process.env.GITHUB_CLIENT_ID,
-                client_secret: process.env.GITHUB_CLIENT_SECRET,
-                grant_type: "refresh_token",
-                refresh_token: userRecord.refresh_token,
-              }),
-            });
-            const refreshData = await refreshResponse.json();
-
-            if (refreshResponse.ok && refreshData.access_token) {
-              userRecord.access_token = refreshData.access_token;
-              userRecord.access_token_expires_in = refreshData.expires_in;
-              userRecord.refresh_token = refreshData.refresh_token || userRecord.refresh_token;
-              userRecord.refresh_token_expires_in = refreshData.refresh_token_expires_in || userRecord.refresh_token_expires_in;
-            } else {
-              // Fallback to the newly obtained token from the code exchange
-              userRecord.access_token = tokenData.access_token;
-              userRecord.access_token_expires_in = tokenData.expires_in;
-              userRecord.refresh_token = tokenData.refresh_token || userRecord.refresh_token;
-              userRecord.refresh_token_expires_in = tokenData.refresh_token_expires_in || userRecord.refresh_token_expires_in;
-            }
-          } catch (error) {
-            console.error("Failed to refresh token:", error);
-            // Fallback to the newly obtained token from the code exchange
-            userRecord.access_token = tokenData.access_token;
-            userRecord.access_token_expires_in = tokenData.expires_in;
-            userRecord.refresh_token = tokenData.refresh_token || userRecord.refresh_token;
-            userRecord.refresh_token_expires_in = tokenData.refresh_token_expires_in || userRecord.refresh_token_expires_in;
-          }
-        } else {
-          // No refresh token available, use the token from the code exchange
-          userRecord.access_token = tokenData.access_token;
-          userRecord.access_token_expires_in = tokenData.expires_in;
-          userRecord.refresh_token = tokenData.refresh_token;
-          userRecord.refresh_token_expires_in = tokenData.refresh_token_expires_in;
-        }
-
-        userRecord.updated_at = Date.now();
-        await userRecord.save();
+      
+      // CREATE: If they are new, map all their GitHub data to the new database columns
+      create: {
+        githubId: githubIdBigInt,
+        githubUsername: user.login,
+        email: resolvedEmail,
+        
+        // Tokens
+        accessToken: tokenData.access_token,
+        accessTokenExpiresIn: tokenData.expires_in,
+        refreshToken: tokenData.refresh_token || null,
+        refreshTokenExpiresIn: tokenData.refresh_token_expires_in || null,
+        tokenType: tokenData.token_type || 'bearer',
+        
+        // App State
+        hasCompletedOnboarding: Boolean(resolvedEmail),
+        
+        // Flattened GitHub Profile Info
+        nodeId: user.node_id,
+        accountType: user.type,
+        name: user.name || user.login,
+        userViewType: user.user_view_type || "public",
+        bio: user.bio || null,
+        location: user.location || null,
+        notificationEmail: user.notification_email || null,
+        avatarUrl: user.avatar_url || null,
+        htmlUrl: user.html_url,
       }
-    } else {
-      userRecord = await User.create({
-        ...userPayload,
-        repos: [],
-      });
-    }
+    });
 
-    console.log("\n\n########## *******User Created******* ##############\n\n");
-    console.log("user:", JSON.stringify(user, null, 2));
+    console.log("\n\n########## *******User Saved to Postgres******* ##############\n\n");
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // // 4. UPDATE JSON FILE - OVERWRITE with NEW data
-    // const jsonFilePath = path.join(__dirname, '../../ashu.json'); // Root dir
-
-    // let existingData = {};
-
-    // try {
-    //     // Read existing file (if exists)
-    //     const fileData = await fs.readFile(jsonFilePath, 'utf8');
-    //     existingData = JSON.parse(fileData);
-    // } catch (error) {
-    //     // File doesn't exist - create fresh
-    //     console.log("Creating new ashu.json");
-    // }
-
-    // // 5. REPLACE old data with NEW data
-    // const updatedData = {
-    //     access_token: access_token,
-    //     tokenData: tokenData,
-    //     user: user,
-    //     repo: repo  // NEW! All repos
-    // };
-
-    // // 6. Write to file (atomic write)
-    // await fs.writeFile(jsonFilePath, JSON.stringify(updatedData, null, 2));
-
-    // console.log("✅ Saved to ashu.json | Repos:", repo.length);
-    // console.log("--------------------------------------------------------\n\n")
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    const created_token = await userRecord.generateToken();
+    // 4. GENERATE JWT 
+    const created_token = generateToken(userRecord);
 
     console.log("#######################\ncreated_token:", created_token);
-    console.log(
-      "\n\n########################################################\n\n"
-    );
+    console.log("\n\n########################################################\n\n");
 
+    // 5. SEND RESPONSE
     res.status(isExistingUser ? 200 : 201).json({
-      msg: isExistingUser
-        ? "user authenticated successfully"
-        : "user created successfully",
+      msg: isExistingUser ? "user authenticated successfully" : "user created successfully",
       status_response: isExistingUser ? 200 : 201,
       token: created_token,
     });
+
   } catch (error) {
     console.error("❌ Error:", error);
     res.status(500).json({ error: error.message, status_response: 500 });
   }
 };
+
 
 const user_data = async (req, res) => {
   try {
