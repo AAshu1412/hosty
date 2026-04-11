@@ -54,21 +54,21 @@ resource "aws_security_group" "hosty_security_group" {
     description = "Allow HTTPS Access/Open"
   }
 
-  ingress {
-    from_port   = 6443
-    to_port     = 6443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Kubernetes API Server"
+  # ingress {
+  #   from_port   = 6443
+  #   to_port     = 6443
+  #   protocol    = "tcp"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  #   description = "Kubernetes API Server"
 
-  }
+  # }
 
   ingress {
     from_port   = 5001
     to_port     = 5001
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Flow Auto Backend Port"
+    description = "Hosty Backend Port"
   }
 
   ingress {
@@ -76,6 +76,7 @@ resource "aws_security_group" "hosty_security_group" {
     to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "Hosty Frontend Port"
   }
 
   ingress {
@@ -87,30 +88,44 @@ resource "aws_security_group" "hosty_security_group" {
 
   }
 
+  ingress {
+    from_port   = 8090
+    to_port     = 8090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Jenkins Port"
+  }
 
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "PostgreSQL Port"
+  }
 
   egress {
     from_port   = 0
     to_port     = 0
-    protocol    = "-1" 
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
     description = "Allow All Outbound Access/Open"
   }
 }
 
 resource "aws_instance" "hosty-ec2" {
-  for_each = tomap({ 
-    "1"   = var.aws_instance_type,
+  for_each = tomap({
+    "1" = var.aws_instance_type,
     # "worker-1" = var.aws_instance_type,
     # "worker-2" = var.aws_instance_type,
   })
 
-  depends_on      = [aws_key_pair.hosty_key, aws_security_group.hosty_security_group] 
+  depends_on      = [aws_key_pair.hosty_key, aws_security_group.hosty_security_group]
   key_name        = aws_key_pair.hosty_key.key_name
   security_groups = [aws_security_group.hosty_security_group.name]
 
-  instance_type = each.value  
-  ami           = var.ec2_ami_id 
+  instance_type = each.value
+  ami           = var.ec2_ami_id
   user_data     = file("docker_installation.sh")
   root_block_device {
     volume_size = var.ec2_storage_size
@@ -118,7 +133,7 @@ resource "aws_instance" "hosty-ec2" {
   }
 
   tags = {
-    Name = "hosty-ec2-${each.key}" 
+    Name = "hosty-ec2-${each.key}"
   }
 }
 
