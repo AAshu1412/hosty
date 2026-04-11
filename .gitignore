@@ -6,7 +6,7 @@ terminal.txt
 .codex
 stitch_exports/
 .DS_Store
-
+did-jenk.txt
 .env.local
 .env.development
 .env.production

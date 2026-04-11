@@ -95,6 +95,14 @@ resource "aws_security_group" "hosty_security_group" {
     cidr_blocks = ["0.0.0.0/0"]
     description = "Jenkins Port"
   }
+   
+ingress {
+from_port = 50000
+to_port = 50000
+protocol = "tcp"
+cidr_blocks = ["0.0.0.0/0"]
+description = "Jenkins Machine Port Communication"
+}
 
   ingress {
     from_port   = 5432
@@ -103,6 +111,15 @@ resource "aws_security_group" "hosty_security_group" {
     cidr_blocks = ["0.0.0.0/0"]
     description = "PostgreSQL Port"
   }
+
+ingress {
+from_port = 8081
+to_port = 8081
+protocol = "tcp"
+cidr_blocks = ["0.0.0.0/0"]
+description = "httpd apache web server"
+
+}
 
   egress {
     from_port   = 0
@@ -119,14 +136,14 @@ resource "aws_instance" "hosty-ec2" {
     # "worker-1" = var.aws_instance_type,
     # "worker-2" = var.aws_instance_type,
   })
-
+  
   depends_on      = [aws_key_pair.hosty_key, aws_security_group.hosty_security_group]
   key_name        = aws_key_pair.hosty_key.key_name
   security_groups = [aws_security_group.hosty_security_group.name]
 
   instance_type = each.value
   ami           = var.ec2_ami_id
-  user_data     = file("docker_installation.sh")
+  user_data     = file("./docker_installation.sh")
   root_block_device {
     volume_size = var.ec2_storage_size
     volume_type = "gp3"

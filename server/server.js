@@ -11,32 +11,25 @@ const { FRONTEND_URLS } = require("./constants");
 const prisma = require("./utils/db-psql");
 const errorMiddleWare = require("./middlewares/error-middleware");
 
-const configuredOrigins = process.env.CLIENT_URLS
-    ? process.env.CLIENT_URLS.split(",").map((origin) => origin.trim()).filter(Boolean)
-    : process.env.FRONTEND_URL
-        ? [process.env.FRONTEND_URL.trim()]
-        : [];
+// const configuredOrigins = process.env.CLIENT_URLS
+//     ? process.env.CLIENT_URLS.split(",").map((origin) => origin.trim()).filter(Boolean)
+//     : process.env.FRONTEND_URL
+//         ? [process.env.FRONTEND_URL.trim()]
+//         : [];
 
-const allowedOrigins = new Set([
-    ...FRONTEND_URLS,
-    ...configuredOrigins,
-]);
+// const allowedOrigins = new Set([
+//     ...FRONTEND_URLS,
+//     ...configuredOrigins,
+// ]);
+
 
 const corsOptions={
-    origin(origin, callback) {
-        if (!origin || allowedOrigins.has(origin)) {
-            return callback(null, true);
-        }
-
-        return callback(null, false);
-    },
-    methods:["GET","POST","PUT","DELETE","PATCH","HEAD","OPTIONS"],
-    allowedHeaders:["Content-Type","Authorization"],
-    credentials:true,
-    optionsSuccessStatus:204
-};
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    methods:"GET,POST,PUT ,DELETE,PATCH,HEAD,OPTIONS",
+    credentials:true
+}
 app.use(cors(corsOptions));
-app.options(/.*/, cors(corsOptions));
+// app.options(/.*/, cors(corsOptions));
 app.use(express.json());
 
 app.use("/api/github",githubAuthRouter);

@@ -3,7 +3,7 @@
 sudo apt-get update
 sudo apt-get upgrade -y
 
-sudo apt-get install docker.io docker-compose-plugin -y
+sudo apt-get install docker.io -y
 sudo usermod -aG docker ubuntu
 
 
