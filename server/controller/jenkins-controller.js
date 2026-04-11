@@ -1,6 +1,7 @@
 const axios = require('axios');
 const {User} = require("../models/user-model");
 const prisma = require('../utils/db-psql');
+const {JENKINS_URL} = require('../constants');
 const jenkins_start_build = async (req, res) => {
     const { repo_url, branch, subDirectory } = req.body;
     
@@ -12,7 +13,7 @@ const jenkins_start_build = async (req, res) => {
         const to = req.user.email || null;
         
         // 1. Fetch last build number from Jenkins
-        const lastBuildDetail = await axios.get(`http://localhost:8090/job/Hosty/lastBuild/api/json`, {
+        const lastBuildDetail = await axios.get(`${JENKINS_URL}/lastBuild/api/json`, {
             auth: {
                 username: process.env.JENKINS_USERNAME,
                 password: process.env.JENKINS_API_TOKEN
@@ -72,7 +73,7 @@ const jenkins_start_build = async (req, res) => {
         // 4. Trigger Jenkins
         // Note: I moved your payload into the `params` object so Jenkins safely reads them as URL query parameters
         const buildResponse = await axios.post(
-            `http://localhost:8090/job/Hosty/buildWithParameters?token=${process.env.JENKINS_API_TOKEN}`,
+            `${JENKINS_URL}/buildWithParameters?token=${process.env.JENKINS_API_TOKEN}`,
             null, // Jenkins ignores JSON bodies!
             {
                 params: {
@@ -118,7 +119,7 @@ const jenkins_start_build = async (req, res) => {
 const jenkins_console_output = async (req, res) => {
     try{
         const { build_number } = req.body;
-        const consoleOutput = await axios.get(`http://localhost:8090/job/Hosty/${build_number}/consoleText`, {
+        const consoleOutput = await axios.get(`${JENKINS_URL}/${build_number}/consoleText`, {
             auth: {
                 username: process.env.JENKINS_USERNAME,
                 password: process.env.JENKINS_API_TOKEN
@@ -135,7 +136,7 @@ const jenkins_console_output = async (req, res) => {
 
 const jenkins_job_status = async (req, res) => {
     try{
-        const jobStatus = await axios.get(`http://localhost:8090/job/Hosty/api/json`, {
+        const jobStatus = await axios.get(`${JENKINS_URL}/api/json`, {
             auth: {
                 username: process.env.JENKINS_USERNAME,
                 password: process.env.JENKINS_API_TOKEN
@@ -153,7 +154,7 @@ const jenkins_job_status = async (req, res) => {
 const jenkins_per_build_status = async (req, res) => {
     try{
         const { build_number } = req.body;
-        const buildStatus = await axios.get(`http://localhost:8090/job/Hosty/${build_number}/api/json`, {
+        const buildStatus = await axios.get(`${JENKINS_URL}/${build_number}/api/json`, {
             auth: {
                 username: process.env.JENKINS_USERNAME,
                 password: process.env.JENKINS_API_TOKEN
