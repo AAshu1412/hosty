@@ -1,0 +1,66 @@
+version: "3.8"
+
+services:
+  hosty-front:
+    build:
+      context: ./frontend
+      args:
+        - VITE_SERVER_URL=http://localhost:5001
+        - VITE_GITHUB_CLIENT_ID=Iv23liC3cv3llyxCk1Xe
+    container_name: hosty-frontend
+    ports:
+      - "8080:80"
+    networks:
+      - hosty-net
+    depends_on:
+      - hosty-backend
+    restart: unless-stopped
+
+  hosty-backend:
+    build:
+      context: ./server
+    container_name: hosty-backend
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./server/.env 
+    environment:
+      - NODE_ENV=production
+    networks:
+      - hosty-net
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:18.3
+    container_name: hosty-postgres
+    ports:
+      - "5432:5432"
+    env_file:
+      - ./server/.env 
+    environment:
+      - NODE_ENV=production
+      - POSTGRES_DB=hosty
+    networks:
+      - hosty-net
+    volumes:
+      - hosty-volume:/var/lib/postgresql
+    restart: unless-stopped
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: hosty-jenkins
+    ports:
+      - "8090:8080"
+      - "50000:50000"
+    networks:
+      - hosty-net
+    volumes:
+      - jenkins-data:/var/jenkins_home
+    restart: unless-stopped
+
+volumes:
+  hosty-volume:
+  jenkins-data:
+
+networks:
+  hosty-net:
