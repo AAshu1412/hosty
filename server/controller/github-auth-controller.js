@@ -2,6 +2,36 @@ const { User } = require("../models/user-model");
 const prisma = require('../utils/db-psql');
 const { generateToken } = require("../utils/jwt");
 
+
+const github_authenticate = async (req, res) => {
+    try {
+
+      let userIdState = "login";
+
+        if (req.query.token) {
+            try {
+                const secretKey = process.env.JWT_SECRET_KEY;
+                if (!secretKey) throw new Error("Missing Secret Key");
+
+                const decoded = jwt.verify(req.query.token, secretKey);
+                userIdState = decoded.userId; 
+            } catch (err) {
+                console.warn("Invalid token passed to Google Auth, defaulting to primary login.");
+            }
+        }
+
+
+
+        const url = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.GITHUB_REDIRECT_URI)}&response_type=code&state=${userIdState}`;
+        res.redirect(url);
+    }
+    catch (error) {
+        res.status(500).send({ status_response: 500, error: error.message });
+    }
+}
+
+
+
 const github_callback = async (req, res) => {
   const { code } = req.body;
   console.log("code: ", code);

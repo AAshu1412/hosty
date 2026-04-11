@@ -1,4 +1,4 @@
-import { Activity, ArrowRight, GitBranch, Globe2, TriangleAlert } from "lucide-react";
+import { ArrowRight, GitBranch } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Panel } from "@/components/shared/panel";

@@ -1,7 +1,5 @@
-import { Bell, CircleHelp, FileText, MessageSquareMore } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import { SearchInput } from "@/components/shared/search-input";
 import { useAuthStore } from "@/store/authStore";
 import { useSession } from "@/hooks/use-session";
 
