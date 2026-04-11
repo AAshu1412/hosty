@@ -1,34 +1,6 @@
 version: "3.8"
 
 services:
-  hosty-front:
-    build:
-      context: ./frontend
-      args:
-        - VITE_SERVER_URL=http://localhost:5001
-        - VITE_GITHUB_CLIENT_ID=Iv23liC3cv3llyxCk1Xe
-    container_name: hosty-frontend
-    ports:
-      - "8080:80"
-    networks:
-      - hosty-net
-    depends_on:
-      - hosty-backend
-    restart: unless-stopped
-
-  hosty-backend:
-    build:
-      context: ./server
-    container_name: hosty-backend
-    ports:
-      - "5001:5001"
-    env_file:
-      - ./server/.env 
-    environment:
-      - NODE_ENV=production
-    networks:
-      - hosty-net
-    restart: unless-stopped
 
   postgres:
     image: postgres:18.3
@@ -46,6 +18,39 @@ services:
       - hosty-volume:/var/lib/postgresql
     restart: unless-stopped
 
+
+  hosty-backend:
+    build:
+      context: ./server
+    container_name: hosty-backend
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./server/.env 
+    environment:
+      - NODE_ENV=production
+    networks:
+      - hosty-net
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+
+  hosty-front:
+    build:
+      context: ./frontend
+      args:
+        - VITE_SERVER_URL=http://localhost:5001
+        - VITE_GITHUB_CLIENT_ID=Iv23liC3cv3llyxCk1Xe
+    container_name: hosty-frontend
+    ports:
+      - "8080:80"
+    networks:
+      - hosty-net
+    depends_on:
+      - hosty-backend
+    restart: unless-stopped
+
   jenkins:
     image: jenkins/jenkins:lts
     container_name: hosty-jenkins
@@ -58,6 +63,7 @@ services:
       - jenkins-data:/var/jenkins_home
     restart: unless-stopped
 
+
   apache:
     image: httpd:2.4-alpine
     container_name: hosty-apache
@@ -65,8 +71,9 @@ services:
       - "8081:80" 
     networks:
       - hosty-net
+    
+        # This mounts a local folder into Apache so you can easily serve HTML files
     volumes:
-      # This mounts a local folder into Apache so you can easily serve HTML files
       - ./apache-www:/usr/local/apache2/htdocs/
     restart: unless-stopped
 
