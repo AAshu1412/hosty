@@ -1,5 +1,5 @@
-resource "aws_key_pair" "flow_auto_key" {
-  key_name   = "flow-auto-key"
+resource "aws_key_pair" "hosty_key" {
+  key_name   = "hosty-key"
   public_key = file("terra_ed25519.pub")
 }
 
@@ -9,13 +9,12 @@ resource "aws_default_vpc" "default" {
   }
 }
 
-resource "aws_security_group" "flow_auto_security_group" {
-  name   = "flow-auto-security-group"
+resource "aws_security_group" "hosty_security_group" {
+  name   = "hosty-security-group"
   vpc_id = aws_default_vpc.default.id
 
-  #//OPTIONAL(tags)
   tags = {
-    Name = "flow-auto-security-group"
+    Name = "hosty-security-group"
   }
 
   # ==========================================
@@ -31,7 +30,6 @@ resource "aws_security_group" "flow_auto_security_group" {
     description = "Allow ALL internal cluster traffic (UDP/TCP/ICMP)"
   }
 
-  #//Inbound Rules
   ingress {
     from_port   = 22
     to_port     = 22
@@ -88,56 +86,31 @@ resource "aws_security_group" "flow_auto_security_group" {
     description = "Kubelet API (for kubectl logs/exec)"
 
   }
-  ingress {
-    from_port   = 27017
-    to_port     = 27017
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-
-    from_port   = 27016
-    to_port     = 27016
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-
-  }
-
-  ingress {
-
-    from_port   = 27015
-    to_port     = 27015
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 
 
 
-  # //Outbound Rules
   egress {
     from_port   = 0
     to_port     = 0
-    protocol    = "-1" #All Protocol
+    protocol    = "-1" 
     cidr_blocks = ["0.0.0.0/0"]
     description = "Allow All Outbound Access/Open"
   }
 }
 
-resource "aws_instance" "flow-auto-ec2" {
-  #   count = 2 #Number of instance you wanna create   (meta argument)
-  for_each = tomap({ # for_each is used to create multiple instances
-    "master"   = var.aws_instance_type,
-    "worker-1" = var.aws_instance_type,
-    "worker-2" = var.aws_instance_type,
+resource "aws_instance" "hosty-ec2" {
+  for_each = tomap({ 
+    "1"   = var.aws_instance_type,
+    # "worker-1" = var.aws_instance_type,
+    # "worker-2" = var.aws_instance_type,
   })
 
-  depends_on      = [aws_key_pair.flow_auto_key, aws_security_group.flow_auto_security_group] # if these are not created first then ec2 will not be created
-  key_name        = aws_key_pair.flow_auto_key.key_name
-  security_groups = [aws_security_group.flow_auto_security_group.name]
-  #   instance_type   = var.aws_instance_type            # accessing the aws_instance_type from variables.tf
-  instance_type = each.value     # accessing the value of the key from the map (t3.small,t3.micro,t3.micro)
-  ami           = var.ec2_ami_id #ubuntu
+  depends_on      = [aws_key_pair.hosty_key, aws_security_group.hosty_security_group] 
+  key_name        = aws_key_pair.hosty_key.key_name
+  security_groups = [aws_security_group.hosty_security_group.name]
+
+  instance_type = each.value  
+  ami           = var.ec2_ami_id 
   user_data     = file("docker_installation.sh")
   root_block_device {
     volume_size = var.ec2_storage_size
@@ -145,7 +118,7 @@ resource "aws_instance" "flow-auto-ec2" {
   }
 
   tags = {
-    Name = "flow-auto-ec2-${each.key}" # accessing the key from the map (master,worker-1,worker-2)
+    Name = "hosty-ec2-${each.key}" 
   }
 }
 
