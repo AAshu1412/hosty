@@ -30,5 +30,49 @@ services:
       - hosty-net
     restart: unless-stopped
 
+  postgres:
+    image: postgres:18.3
+    container_name: hosty-postgres
+    ports:
+      - "5432:5432"
+    env_file:
+      - ./server/.env 
+    environment:
+      - NODE_ENV=production
+      - POSTGRES_DB=hosty
+    networks:
+      - hosty-net
+    volumes:
+      - hosty-volume:/var/lib/postgresql
+    restart: unless-stopped
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: hosty-jenkins
+    ports:
+      - "8090:8080"
+      - "50000:50000"
+    networks:
+      - hosty-net
+    volumes:
+      - jenkins-data:/var/jenkins_home
+    restart: unless-stopped
+
+  apache:
+    image: httpd:2.4-alpine
+    container_name: hosty-apache
+    ports:
+      - "8081:80" 
+    networks:
+      - hosty-net
+    volumes:
+      # This mounts a local folder into Apache so you can easily serve HTML files
+      - ./apache-www:/usr/local/apache2/htdocs/
+    restart: unless-stopped
+
+volumes:
+  hosty-volume:
+  jenkins-data:
+
 networks:
   hosty-net:
