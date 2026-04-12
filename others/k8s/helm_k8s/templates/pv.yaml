@@ -1,0 +1,36 @@
+# templates/pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: hosty-postgres-pv
+spec:
+  capacity:
+    storage: {{ .Values.storage.postgresSize }}
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/k8s-data/postgres # Physical folder on EC2
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: hosty-jenkins-pv
+spec:
+  capacity:
+    storage: {{ .Values.storage.jenkinsSize }}
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/k8s-data/jenkins # Physical folder on EC2
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: hosty-web-deployments-pv
+spec:
+  capacity:
+    storage: {{ .Values.storage.webDeploymentsSize }}
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /mnt/k8s-data/web-deployments # Physical folder on EC2

@@ -142,9 +142,9 @@ description = "smtp server"
 
 resource "aws_instance" "hosty-ec2" {
   for_each = tomap({
-    "1" = var.aws_instance_type,
-    # "worker-1" = var.aws_instance_type,
-    # "worker-2" = var.aws_instance_type,
+    "master" = var.aws_instance_type,
+    "worker-1" = var.aws_instance_type,
+    "worker-2" = var.aws_instance_type,
   })
   
   depends_on      = [aws_key_pair.hosty_key, aws_security_group.hosty_security_group]

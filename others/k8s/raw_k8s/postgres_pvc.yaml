@@ -1,0 +1,15 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+
+metadata:
+  name: hosty-postgres-pvc
+  namespace: hosty-ns
+
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 500Mi           # Requesting 1GB from the 3GB persistent volume
+                              # You can't request 4GB

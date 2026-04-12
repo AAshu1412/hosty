@@ -1,0 +1,15 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+
+metadata:
+  name: hosty-jenkins-pvc
+  namespace: hosty-ns
+
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1.5Gi           # Requesting 1GB from the 3GB persistent volume
+                              # You can't request 4GB

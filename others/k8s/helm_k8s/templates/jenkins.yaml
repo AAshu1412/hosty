@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hosty-jenkins-pvc
+  namespace: {{ .Values.namespace }}
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  resources:
+    requests:
+      storage: {{ .Values.storage.jenkinsSize }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hosty-web-deployments-pvc
+  namespace: {{ .Values.namespace }}
+spec:
+  accessModes: [ "ReadWriteMany" ]
+  resources:
+    requests:
+      storage: {{ .Values.storage.webDeploymentsSize }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hosty-jenkins
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hosty-jenkins
+  template:
+    metadata:
+      labels:
+        app: hosty-jenkins
+    spec:
+      securityContext:
+        runAsUser: 0 # Run as root to prevent deployment permission errors
+      nodeSelector:
+        storage-node: "true"
+      containers:
+      - name: jenkins
+        image: jenkins/jenkins:lts
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - secretRef:
+            name: hosty-secrets
+        volumeMounts:  
+        - name: jenkins-data
+          mountPath: /var/lib/jenkins
+        - name: web-deployments
+          mountPath: /srv/http
+      volumes:
+      - name: jenkins-data
+        persistentVolumeClaim:
+          claimName: hosty-jenkins-pvc
+      - name: web-deployments
+        persistentVolumeClaim:
+          claimName: hosty-web-deployments-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hosty-jenkins-svc
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: hosty-jenkins
+  ports:
+    - port: 8080
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: hosty-jenkins-vpa
+  namespace: {{ .Values.namespace }}
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hosty-jenkins
+  updatePolicy:
+    updateMode: "Auto"

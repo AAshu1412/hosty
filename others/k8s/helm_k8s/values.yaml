@@ -1,0 +1,19 @@
+namespace: hosty-ns
+domain: "13.233.104.221.nip.io"
+
+images:
+  backend: "your-dockerhub-username/hosty-backend:latest" # Update this!
+  frontend: "your-dockerhub-username/hosty-frontend:latest" # Update this!
+
+secrets:
+  GITHUB_CLIENT_ID: "base64_encoded_value"
+  GITHUB_CLIENT_SECRET: "base64_encoded_value"
+  JWT_SECRET_KEY: "base64_encoded_value"
+  POSTGRES_USER: "base64_user"
+  POSTGRES_PASSWORD: "base64_password"
+  # Add the rest of your secrets here...
+
+storage:
+  postgresSize: 500Mi
+  jenkinsSize: 1.5Gi
+  webDeploymentsSize: 3Gi

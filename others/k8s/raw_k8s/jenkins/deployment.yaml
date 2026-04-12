@@ -1,0 +1,42 @@
+kind: Deployment
+apiVersion: apps/v1
+
+metadata:
+  name: hosty-jenkins-deployment
+  namespace: hosty-ns
+  labels:
+    app: hosty-jenkins-dep
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hosty-jenkins-pod-classify
+
+  template:
+    metadata:
+      name: hosty-jenkins-pod
+      namespace: hosty-ns
+      labels:
+        app: hosty-jenkins-pod-classify
+
+    spec:
+      containers:
+      - name: hosty-jenkins-container
+        image: jenkins/jenkins:lts
+        ports:
+        - containerPort: 8080
+        
+        envFrom:
+          - secretRef:
+              name: hosty-backend-secret
+
+      volumeMounts:  
+        - name: hosty-jenkins-data          # Refers to the volume named "mysql-volume"
+          mountPath: /var/lib/jenkins    # Path of the Pod
+    volumes:
+      - name: hosty-jenkins-data            # Defines a volume named "mysql-volume"
+        persistentVolumeClaim:
+                   claimName: hosty-jenkins-pvc
+
+        

@@ -1,0 +1,40 @@
+kind: Deployment
+apiVersion: apps/v1
+
+metadata:
+  name: hosty-postgres-deployment
+  namespace: hosty-ns
+  labels:
+    app: hosty-postgres-dep
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hosty-postgres-pod-classify
+
+  template:
+    metadata:
+      name: hosty-postgres-pod
+      namespace: hosty-ns
+      labels:
+        app: hosty-postgres-pod-classify
+
+    spec:
+      containers:
+      - name: hosty-postgres-container
+        image: postgres:18.3
+        ports:
+        - containerPort: 5432
+
+        envFrom:
+          - secretRef:
+              name: hosty-backend-secret
+
+      volumeMounts:  
+        - name: hosty-postgres-data          # Refers to the volume named "mysql-volume"
+          mountPath: /var/lib/postgresql/data    # Path of the Pod
+    volumes:
+      - name: hosty-postgres-data            # Defines a volume named "mysql-volume"
+        persistentVolumeClaim:
+                   claimName: hosty-postgres-pvc

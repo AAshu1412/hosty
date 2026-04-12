@@ -2,14 +2,14 @@ kind: HorizontalPodAutoscaler
 apiVersion: autoscaling/v2
 
 metadata:
-  name: flow-auto-backend-hpa
-  namespace: flow-auto-ns
+  name: hosty-backend-hpa
+  namespace: hosty-ns
 
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: flow-auto-backend-deployment
+    name: hosty-backend-deployment
 
   minReplicas: 1
   maxReplicas: 5

@@ -2,11 +2,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: hosty-ingress
-  namespace: hosty-ns
+  namespace: {{ .Values.namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
 spec:
   ingressClassName: nginx
   rules:
-  - http:
+  - host: hosty.{{ .Values.domain }}
+    http:
       paths:
       - path: /api
         pathType: Prefix
@@ -15,7 +18,6 @@ spec:
             name: hosty-backend-svc
             port:
               number: 5001
-
       - path: /
         pathType: Prefix
         backend:
@@ -23,3 +25,13 @@ spec:
             name: hosty-frontend-svc
             port:
               number: 80
+  - host: jenkins.{{ .Values.domain }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: hosty-jenkins-svc
+            port:
+              number: 8080

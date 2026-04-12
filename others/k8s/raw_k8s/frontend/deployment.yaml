@@ -2,27 +2,28 @@ kind: Deployment
 apiVersion: apps/v1
 
 metadata:
-  name: flow-auto-frontend-deployment
-  namespace: flow-auto-ns
+  name: hosty-frontend-deployment
+  namespace: hosty-ns
   labels:
-    app: flow-auto-frontend-dep
+    app: hosty-frontend-dep
 
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: flow-auto-frontend-pod-classify
+      app: hosty-frontend-pod-classify
 
   template:
     metadata:
-      name: flow-auto-frontend-pod
-      namespace: flow-auto-ns
+      name: hosty-frontend-pod
+      namespace: hosty-ns
       labels:
-        app: flow-auto-frontend-pod-classify
+        app: hosty-frontend-pod-classify
 
     spec:
       containers:
-      - name: flow-auto-frontend-container
-        image: aashu1412/flow-auto-frontend:v1
+      - name: hosty-frontend-container
+        image:
+          context: ../../../frontend
         ports:
         - containerPort: 80

@@ -1,0 +1,42 @@
+# templates/static-server.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hosty-static-server
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hosty-static-server
+  template:
+    metadata:
+      labels:
+        app: hosty-static-server
+    spec:
+      nodeSelector:
+        storage-node: "true" # MUST run on the same node as Jenkins!
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: web-deployments
+          mountPath: /usr/share/nginx/html # NGINX reads from the shared folder
+      volumes:
+      - name: web-deployments
+        persistentVolumeClaim:
+          claimName: hosty-web-deployments-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: static-server-service
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: hosty-static-server
+  ports:
+    - port: 80

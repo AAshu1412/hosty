@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hosty-backend
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hosty-backend
+  template:
+    metadata:
+      labels:
+        app: hosty-backend
+    spec:
+      containers:
+      - name: backend
+        image: {{ .Values.images.backend }}
+        ports:
+        - containerPort: 5001
+        envFrom:
+        - secretRef:
+            name: hosty-secrets
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@hosty-postgres-svc:5432/hosty?schema=public"
+        resources:
+          requests:
+            cpu: "250m"      
+            memory: "256Mi"
+          limits:
+            cpu: "500m"      
+            memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hosty-backend-svc
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: hosty-backend
+  ports:
+    - port: 5001
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hosty-backend-hpa
+  namespace: {{ .Values.namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hosty-backend
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70

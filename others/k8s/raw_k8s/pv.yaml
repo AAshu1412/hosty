@@ -1,0 +1,17 @@
+kind: PersistentVolume
+apiVersion: v1
+
+metadata:
+  name: hosty-pv
+
+spec:
+  storageClassName: standard     #get the name by running this command "kubectl get storageclass"
+
+  capacity:
+    storage: 3Gi  #3GB
+
+  accessModes:
+    - ReadWriteMany         # can read from this storage or write in this storage
+
+  hostPath:
+    path: /mnt/data         # Node's Path (Worker Node)

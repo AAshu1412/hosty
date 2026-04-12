@@ -2,34 +2,35 @@ kind: Deployment
 apiVersion: apps/v1
 
 metadata:
-  name: flow-auto-backend-deployment
-  namespace: flow-auto-ns
+  name: hosty-backend-deployment
+  namespace: hosty-ns
   labels:
-    app: flow-auto-backend-dep
+    app: hosty-backend-dep
 
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: flow-auto-backend-pod-classify
+      app: hosty-backend-pod-classify
 
   template:
     metadata:
-      name: flow-auto-backend-pod
-      namespace: flow-auto-ns
+      name: hosty-backend-pod
+      namespace: hosty-ns
       labels:
-        app: flow-auto-backend-pod-classify
+        app: hosty-backend-pod-classify
 
     spec:
       containers:
-      - name: flow-auto-backend-container
-        image: aashu1412/flow-auto-backend:v1
+      - name: hosty-backend-container
+        image:
+          context: ../../../server
         ports:
         - containerPort: 5001
         
         envFrom:
           - secretRef:
-              name: flow-auto-backend-secret
+              name: hosty-backend-secret
 
         resources:
           requests:

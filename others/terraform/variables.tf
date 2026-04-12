@@ -5,7 +5,7 @@ variable "aws_instance_type" {
 
 variable "ec2_storage_size" {
   type = number
-  default = 16
+  default = 12
 }
 
 variable "ec2_ami_id" {
