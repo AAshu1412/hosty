@@ -1,18 +1,27 @@
 pipeline {
     agent any
-    
+     parameters {
+        string(name: 'REPO_URL', defaultValue: '', description: 'The Git repository URL to clone')
+        string(name: 'BRANCH', defaultValue: '', description: 'The branch to build (e.g., main or master)')
+        string(name: 'SUB_DIR', defaultValue: '', description: 'Subdirectory where the frontend code lives (leave blank if in root)')
+        string(name: 'USERNAME', defaultValue: '', description: 'Name of the user triggering the build')
+        string(name: 'USER_ID', defaultValue: '', description: 'ID of the user')
+        string(name: 'EMAIL', defaultValue: '', description: 'Email address for build notifications')
+    }
     stages {
-        stage('Clone') {
+      stage('Clone') {
             steps {
                 script {
                     env.FOLDER_NAME = env.REPO_URL.tokenize('/').last().minus('.git').toLowerCase()
                     
-                   
                     if (env.SUB_DIR?.trim()) {
                         env.BUILD_DIR = "${env.FOLDER_NAME}/${env.SUB_DIR}"
                     } else {
                         env.BUILD_DIR = env.FOLDER_NAME
                     }
+                    
+                    // --- NEW FIX: Wipe out the old folder to prevent Git permission conflicts ---
+                    sh "rm -rf ${env.FOLDER_NAME}"
                     
                     dir(env.FOLDER_NAME) {
                         git url: "${env.REPO_URL}", branch: "${env.BRANCH}"
@@ -23,9 +32,7 @@ pipeline {
         
         stage('Install Modules & Build') {
             steps {
-            
                 dir(env.BUILD_DIR) {
-                    
                     nodejs(nodeJSInstallationName: '24.9.0') {
                         sh '''
                             npm install -g pnpm
@@ -37,84 +44,38 @@ pipeline {
             }
         }
 
-        stage('Apache Virtual Host Configuration') {
+        stage('Deploy to NGINX') {
             steps {
                 sh '''
-                    set +x 
-                    
+                    # Copy the compiled React files straight into the shared volume mailbox
                     mkdir -p /srv/http/$FOLDER_NAME
-                    
-                    cp -r /var/lib/jenkins/workspace/Hosty/$BUILD_DIR/dist/* /srv/http/$FOLDER_NAME/
-                '''
-            }
-        }
-        
-        stage('Configure Apache & Restart') {
-            steps {
-                sh '''
-                    set +x 
-                    
-                    # --- 1. APACHE VIRTUAL HOST ---
-                    VHOST_BLOCK="
-<VirtualHost *:80>
-    ServerAdmin webmaster@example.com
-    DocumentRoot /srv/http/$FOLDER_NAME
-    ServerName $FOLDER_NAME.hosty.com
-    ServerAlias www.$FOLDER_NAME.hosty.com
-    ErrorLog /var/log/httpd/${FOLDER_NAME}_error.log
-    CustomLog /var/log/httpd/${FOLDER_NAME}_access.log combined
-</VirtualHost>"
-
-                    if ! grep -q "ServerName $FOLDER_NAME.hosty.com" /etc/httpd/conf/extra/httpd-vhosts.conf; then
-                        echo "Adding new VirtualHost configuration for $FOLDER_NAME..."
-                        echo "$VHOST_BLOCK" | sudo /usr/bin/tee -a /etc/httpd/conf/extra/httpd-vhosts.conf > /dev/null
-                    else
-                        echo "VirtualHost for $FOLDER_NAME already exists. Skipping append."
-                    fi
-
-                    # --- 2. LOCAL DNS ROUTING (/etc/hosts) ---
-                    HOSTS_ENTRY="127.0.0.1   $FOLDER_NAME.hosty.com www.$FOLDER_NAME.hosty.com"
-                    
-                    if ! grep -q "$FOLDER_NAME.hosty.com" /etc/hosts; then
-                        echo "Adding local DNS routing to /etc/hosts..."
-                        echo "$HOSTS_ENTRY" | sudo /usr/bin/tee -a /etc/hosts > /dev/null
-                    else
-                        echo "DNS routing for $FOLDER_NAME already exists in /etc/hosts. Skipping."
-                    fi
-
-                    # --- 3. TEST AND RESTART ---
-                    sudo /usr/bin/httpd -t
-                    sudo /usr/bin/systemctl restart httpd
+                    cp -r $WORKSPACE/$BUILD_DIR/dist/* /srv/http/$FOLDER_NAME/
                 '''
             }
         }
     }
     post {
         success {
-            // 1. Triple double-quotes allow Groovy variable injection (${env...})
-            // 2. We use single quotes around the JSON payload for the bash curl command
             sh """
                 curl -X POST -H "Content-Type: application/json" \
                 -d '{"build": "${env.BUILD_NUMBER}", "status": "${currentBuild.currentResult}", "user": "${env.USERNAME}", "user_id": "${env.USER_ID}", "email": "${env.EMAIL}", "hosted_site_url": "http://${env.FOLDER_NAME}.hosty.com", "repo_url":"${env.REPO_URL}", "branch": "${env.BRANCH}", "subDirectory":"${env.SUB_DIR}"}' \
-                http://localhost:5001/api/webhook/jenkinsWebhook/
+                http://hosty-backend:5001/api/webhook/jenkinsWebhook/
             """
             
-            // 3. MUST wrap 'if' statements in a script block!
             script {
                 if (env.EMAIL?.trim()) {
                     emailext subject: "Build Successful: ${env.JOB_NAME}",
                              body: "Good News! The build was successful.",
-                             to: "${env.EMAIL}" // Actually uses the variable now!
+                             to: "${env.EMAIL}" 
                 }
             }
         }
         
         failure {
-            // Added the failure webhook so your Express server knows it failed!
             sh """
                 curl -X POST -H "Content-Type: application/json" \
                 -d '{"build": "${env.BUILD_NUMBER}", "status": "${currentBuild.currentResult}", "user": "${env.USERNAME}", "user_id": "${env.USER_ID}", "email": "${env.EMAIL}", "hosted_site_url": "http://${env.FOLDER_NAME}.hosty.com", "repo_url":"${env.REPO_URL}", "branch": "${env.BRANCH}", "subDirectory":"${env.SUB_DIR}"}' \
-                http://localhost:5001/api/webhook/jenkinsWebhook/
+                http://hosty-backend:5001/api/webhook/jenkinsWebhook/
             """
 
             script {

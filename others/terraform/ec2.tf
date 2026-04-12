@@ -121,6 +121,16 @@ description = "httpd apache web server"
 
 }
 
+
+ingress {
+from_port = 25
+to_port = 25
+protocol = "tcp"
+cidr_blocks = ["0.0.0.0/0"]
+description = "smtp server"
+
+}
+
   egress {
     from_port   = 0
     to_port     = 0
