@@ -50,7 +50,7 @@
 ## 📖 About The Project
 <!-- ════════════════════════════════════════════════════════════════════════ -->
 
-**Hosty** is a self-hosted web deployment platform that lets users deploy their frontend projects (React, Vite, vanilla HTML/CSS, etc.) directly from a GitHub repository — with a single click. It provides each deployed site a unique subdomain (e.g., `your-project.hosty.com`), automated CI/CD builds via Jenkins, real-time build status tracking, and email notifications.
+**Hosty** is a self-hosted web deployment platform that lets users deploy their frontend projects (React, Vite, vanilla HTML/CSS, etc.) directly from a GitHub repository — with a single click. It provides each deployed site a unique subdomain (e.g., `your-project.<IP_ADDRESS>.nip.io`), automated CI/CD builds via Jenkins, real-time build status tracking, and email notifications.
 
 Think of it as your own personal **Vercel / Netlify**, running entirely on your own infrastructure.
 
@@ -62,7 +62,7 @@ Think of it as your own personal **Vercel / Netlify**, running entirely on your 
 
 - 🔐 **GitHub OAuth Authentication** — Secure login via GitHub OAuth Apps
 - 📦 **One-Click Deployment** — Import any public GitHub repo and deploy it instantly
-- 🌐 **Subdomain-Based Hosting** — Each project gets its own subdomain (`project-name.hosty.com`)
+- 🌐 **Subdomain-Based Hosting** — Each project gets its own subdomain (`project-name.<IP_ADDRESS>.nip.io`)
 - 🏗️ **Automated CI/CD Pipeline** — Jenkins clones, installs, builds, and deploys your project automatically
 - 📊 **Build History & Logs** — Track every build with status, timestamps, and detailed logs
 - 📧 **Email Notifications** — Receive build success/failure alerts via email
@@ -103,7 +103,7 @@ Think of it as your own personal **Vercel / Netlify**, running entirely on your 
                         │                                                 │
                         │  ┌─────────────┐       ┌──────────────────┐    │
   User Sites ──► :80    │  │    NGINX     │◄──────│     Jenkins      │    │
-  (*.hosty.com)         │  │  (Reverse    │       │   (CI/CD Engine) │    │
+  (*.<IP_ADDRESS>.nip.io)         │  │  (Reverse    │       │   (CI/CD Engine) │    │
                         │  │   Proxy) :80 │       │     :8090        │    │
                         │  └─────────────┘       └──────────────────┘    │
                         │                                                 │
@@ -114,7 +114,7 @@ Think of it as your own personal **Vercel / Netlify**, running entirely on your 
 1. User logs in via **GitHub OAuth** on the React frontend
 2. User selects a repo → Backend triggers a **Jenkins** build
 3. Jenkins **clones**, **installs dependencies**, **builds** the project, and copies output to a shared NGINX volume
-4. **NGINX** serves the built site on a dynamic subdomain (e.g., `your-repo.hosty.com`)
+4. **NGINX** serves the built site on a dynamic subdomain (e.g., `your-repo.<IP_ADDRESS>.nip.io`)
 5. Jenkins sends a **webhook** back to the backend with build status
 6. User sees real-time **build status**, **logs**, and the **live hosted URL** on the dashboard
 
@@ -192,7 +192,7 @@ hosty/
 - [AWS Account](https://aws.amazon.com/) with IAM credentials configured
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) installed locally
 - [GitHub OAuth App](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app) — create one to get your `CLIENT_ID` and `CLIENT_SECRET`
-- A registered domain (e.g., `hosty.com`) with a wildcard DNS record (`*.hosty.com`) pointing to your EC2 instance's public IP
+- A registered domain (e.g., `<IP_ADDRESS>.nip.io`) with a wildcard DNS record (`*.<IP_ADDRESS>.nip.io`) pointing to your EC2 instance's public IP
 
 ---
 
@@ -349,7 +349,7 @@ docker exec -it hosty-backend npx prisma migrate deploy
 - **Dashboard:** `http://<YOUR_EC2_PUBLIC_IP>:8080`
 - **API Server:** `http://<YOUR_EC2_PUBLIC_IP>:5001`
 - **Jenkins:** `http://<YOUR_EC2_PUBLIC_IP>:8090`
-- **Deployed Sites:** `http://<project-name>.hosty.com`
+- **Deployed Sites:** `http://<project-name>.<IP_ADDRESS>.nip.io`
 
 <br/>
 
