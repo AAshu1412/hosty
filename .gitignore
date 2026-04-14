@@ -19,6 +19,7 @@ frontend/dist/
 ashu.json
 tree.txt
 terminal.txt
+did-jenk.txt
 server/tree.txt
 *.log
 npm-debug.log*
@@ -28,3 +29,5 @@ yarn-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+
+others/k8s/helm_k8s/secret_values.yaml

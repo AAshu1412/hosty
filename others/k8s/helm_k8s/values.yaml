@@ -1,19 +1,23 @@
+# values.yaml
 namespace: hosty-ns
-domain: "13.233.104.221.nip.io"
+domain: "3.6.87.214.nip.io"
 
 images:
-  backend: "your-dockerhub-username/hosty-backend:latest" # Update this!
-  frontend: "your-dockerhub-username/hosty-frontend:latest" # Update this!
+  backend: "aashu1412/hosty-backend:latest" 
+  frontend: "aashu1412/hosty-frontend:latest" 
 
 secrets:
-  GITHUB_CLIENT_ID: "base64_encoded_value"
-  GITHUB_CLIENT_SECRET: "base64_encoded_value"
-  JWT_SECRET_KEY: "base64_encoded_value"
-  POSTGRES_USER: "base64_user"
-  POSTGRES_PASSWORD: "base64_password"
-  # Add the rest of your secrets here...
+  GITHUB_CLIENT_ID: <YOUR_BASE64_GITHUB_CLIENT_ID>
+  GITHUB_CLIENT_SECRET: <YOUR_BASE64_GITHUB_CLIENT_SECRET>
+  JENKINS_USERNAME: <YOUR_BASE64_JENKINS_USERNAME>
+  JENKINS_API_TOKEN: <YOUR_BASE64_JENKINS_API_TOKEN>
+  JENKINS_CRUMB: <YOUR_BASE64_JENKINS_CRUMB>
+  JWT_SECRET_KEY: <YOUR_BASE64_JWT_SECRET_KEY>
+  JENKINS_URL: <YOUR_BASE64_JENKINS_URL>
+  FRONTEND_URL: <YOUR_BASE64_FRONTEND_URL>
+  DATABASE_URL: <YOUR_BASE64_DATABASE_URL>
+  POSTGRES_USER: <YOUR_BASE64_POSTGRES_USER>
+  POSTGRES_PASSWORD: <YOUR_BASE64_POSTGRES_PASSWORD>
 
 storage:
   postgresSize: 500Mi
-  jenkinsSize: 1.5Gi
-  webDeploymentsSize: 3Gi
