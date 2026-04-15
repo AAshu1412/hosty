@@ -28,18 +28,18 @@
 <br/>
 
 <!-- ════════════════════════════════════════════════════════════════════════ -->
-## 📸 Project Screenshots
+## 📸 Project Photos
 <!-- ════════════════════════════════════════════════════════════════════════ -->
 
 <!-- Replace the placeholders below with your actual screenshots -->
 
-| Login Page | Dashboard |
-|:---:|:---:|
-| ![Login Page](https://via.placeholder.com/600x340?text=Login+Page+Screenshot) | ![Dashboard](https://via.placeholder.com/600x340?text=Dashboard+Screenshot) |
 
-| Deployment View | Build Logs |
-|:---:|:---:|
-| ![Deployment](https://via.placeholder.com/600x340?text=Deployment+Screenshot) | ![Build Logs](https://via.placeholder.com/600x340?text=Build+Logs+Screenshot) |
+
+<p align="center">
+  <img src="./assets/hosty1.png" alt="Flow Banner" width="100%" />
+    <img src="./assets/hosty2.png" alt="Flow Banner" width="100%" />
+</p>
+
 
 <!-- Add more screenshots as needed -->
 

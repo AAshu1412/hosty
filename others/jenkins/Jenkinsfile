@@ -20,7 +20,7 @@ pipeline {
                         env.BUILD_DIR = env.FOLDER_NAME
                     }
                     
-                    // --- NEW FIX: Wipe out the old folder to prevent Git permission conflicts ---
+                    // Wipe out the old folder to prevent Git permission conflicts
                     sh "rm -rf ${env.FOLDER_NAME}"
                     
                     dir(env.FOLDER_NAME) {
@@ -44,12 +44,15 @@ pipeline {
             }
         }
 
-        stage('Deploy to NGINX') {
+        stage('Deploy to Bare-Metal NGINX') {
             steps {
                 sh '''
-                    # Copy the compiled React files straight into the shared volume mailbox
+                    # Copy to the Master Node's physical web directory
                     mkdir -p /srv/http/$FOLDER_NAME
                     cp -r $WORKSPACE/$BUILD_DIR/dist/* /srv/http/$FOLDER_NAME/
+                    
+                    # Ensure NGINX has permission to read the files
+                    chmod -R 755 /srv/http/$FOLDER_NAME
                 '''
             }
         }
@@ -58,33 +61,17 @@ pipeline {
         success {
             sh """
                 curl -X POST -H "Content-Type: application/json" \
-                -d '{"build": "${env.BUILD_NUMBER}", "status": "${currentBuild.currentResult}", "user": "${env.USERNAME}", "user_id": "${env.USER_ID}", "email": "${env.EMAIL}", "hosted_site_url": "http://${env.FOLDER_NAME}.hosty.com", "repo_url":"${env.REPO_URL}", "branch": "${env.BRANCH}", "subDirectory":"${env.SUB_DIR}"}' \
+                -d '{"build": "${env.BUILD_NUMBER}", "status": "${currentBuild.currentResult}", "user": "${env.USERNAME}", "user_id": "${env.USER_ID}", "email": "${env.EMAIL}", "hosted_site_url": "http://${env.FOLDER_NAME}.3.111.41.38.nip.io", "repo_url":"${env.REPO_URL}", "branch": "${env.BRANCH}", "subDirectory":"${env.SUB_DIR}"}' \
                 http://hosty-backend:5001/api/webhook/jenkinsWebhook/
             """
-            
-            script {
-                if (env.EMAIL?.trim()) {
-                    emailext subject: "Build Successful: ${env.JOB_NAME}",
-                             body: "Good News! The build was successful.",
-                             to: "${env.EMAIL}" 
-                }
-            }
         }
         
         failure {
             sh """
                 curl -X POST -H "Content-Type: application/json" \
-                -d '{"build": "${env.BUILD_NUMBER}", "status": "${currentBuild.currentResult}", "user": "${env.USERNAME}", "user_id": "${env.USER_ID}", "email": "${env.EMAIL}", "hosted_site_url": "http://${env.FOLDER_NAME}.hosty.com", "repo_url":"${env.REPO_URL}", "branch": "${env.BRANCH}", "subDirectory":"${env.SUB_DIR}"}' \
+                -d '{"build": "${env.BUILD_NUMBER}", "status": "${currentBuild.currentResult}", "user": "${env.USERNAME}", "user_id": "${env.USER_ID}", "email": "${env.EMAIL}", "hosted_site_url": "http://${env.FOLDER_NAME}.3.111.41.38.nip.io", "repo_url":"${env.REPO_URL}", "branch": "${env.BRANCH}", "subDirectory":"${env.SUB_DIR}"}' \
                 http://hosty-backend:5001/api/webhook/jenkinsWebhook/
             """
-
-            script {
-                if (env.EMAIL?.trim()) {
-                    emailext subject: "Build FAILED: ${env.JOB_NAME}",
-                             body: "Bad News. The build has failed. Please check the Jenkins console logs.",
-                             to: "${env.EMAIL}"
-                }
-            }
         }
     }
 }

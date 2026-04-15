@@ -161,7 +161,7 @@ resource "aws_instance" "hosty-ec2" {
 
   instance_type = each.value
   ami           = var.ec2_ami_id
-  user_data     = file("./docker_installation.sh")
+  user_data     = file("docker_installation.sh")
   root_block_device {
     volume_size = var.ec2_storage_size
     volume_type = "gp3"

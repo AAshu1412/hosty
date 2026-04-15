@@ -22,7 +22,7 @@ const errorMiddleWare = require("./middlewares/error-middleware");
 //     ...configuredOrigins,
 // ]);
 
-
+console.log(process.env.FRONTEND_URL);
 const corsOptions={
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
     methods:"GET,POST,PUT ,DELETE,PATCH,HEAD,OPTIONS",
